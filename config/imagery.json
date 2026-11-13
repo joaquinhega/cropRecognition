@@ -1,0 +1,6 @@
+{
+  "stac_url": "https://earth-search.aws.element84.com/v1",
+  "collection": "sentinel-2-l2a",
+  "date_range": "2025-11-01/2026-11-01",
+  "max_cloud_cover": 20
+}
