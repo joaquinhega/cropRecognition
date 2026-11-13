@@ -1,0 +1,23 @@
+# Data (large files stay out of git; only the folder is tracked)
+data/*
+!data/.gitkeep
+
+# Environment and secrets
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
