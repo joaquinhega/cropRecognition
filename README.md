@@ -22,9 +22,21 @@ Python (FastAPI, scikit-learn), React con Vite y Leaflet, Sentinel-2, Docker Com
 
 ## Estructura
 
+- `src/cultivos/`: API y lógica en Python
+- `web/`: interfaz en React
 - `docs/`: guías del proyecto
 - `data/`: datos locales (no se versionan)
 
 ## Cómo ejecutar
 
-Se completa en la tarea A0-T2.
+Requisitos: Docker Desktop abierto.
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+- Web: http://localhost:5173
+- API: http://localhost:8000/health (documentación en /docs)
+
+Para detener: `Ctrl+C` y luego `docker compose down`.
