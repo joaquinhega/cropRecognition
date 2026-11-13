@@ -2,5 +2,9 @@
   "boundary_source_url": "https://infra.datos.gob.ar/georef/departamentos.geojson",
   "province": "Mendoza",
   "department": "Luján de Cuyo",
-  "boundary_path": "data/boundaries/lujan_de_cuyo.geojson"
+  "boundary_path": "data/boundaries/lujan_de_cuyo.geojson",
+  "work_area": {
+    "name": "Agrelo",
+    "bbox": [-68.9005, -33.149, -68.8795, -33.131]
+  }
 }
