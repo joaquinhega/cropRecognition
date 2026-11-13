@@ -1,0 +1,6 @@
+{
+  "boundary_source_url": "https://infra.datos.gob.ar/georef/departamentos.geojson",
+  "province": "Mendoza",
+  "department": "Luján de Cuyo",
+  "boundary_path": "data/boundaries/lujan_de_cuyo.geojson"
+}

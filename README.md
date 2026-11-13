@@ -22,6 +22,7 @@ Python (FastAPI, scikit-learn), React con Vite y Leaflet, Sentinel-2, Docker Com
 
 ## Estructura
 
+- `config/`: configuración de la zona
 - `src/cultivos/`: API y lógica en Python
 - `web/`: interfaz en React
 - `docs/`: guías del proyecto
@@ -38,5 +39,11 @@ docker compose up --build
 
 - Web: http://localhost:5173
 - API: http://localhost:8000/health (documentación en /docs)
+
+Límite de la zona (una sola vez, después de clonar):
+
+```powershell
+docker compose run --rm api python -m cultivos.fetch_boundary
+```
 
 Para detener: `Ctrl+C` y luego `docker compose down`.
