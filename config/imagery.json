@@ -2,5 +2,15 @@
   "stac_url": "https://earth-search.aws.element84.com/v1",
   "collection": "sentinel-2-l2a",
   "date_range": "2025-11-01/2026-11-01",
-  "max_cloud_cover": 20
+  "max_cloud_cover": 20,
+  "tile": "MGRS-19HED",
+  "bands": ["blue", "green", "red", "nir"],
+  "scl_band": "scl",
+  "raw_dir": "data/raw",
+  "dn_offset": 1000,
+  "dn_scale": 10000,
+  "preview": {
+    "scale": 4,
+    "max_reflectance": 0.15
+  }
 }
