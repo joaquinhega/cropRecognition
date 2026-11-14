@@ -35,5 +35,18 @@
       "min": 0.0,
       "max": 0.8
     }
+  },
+  "parcel_size": {
+    "pixel_size_m": 10,
+    "areas_ha": [
+      0.1,
+      0.25,
+      0.5,
+      1,
+      2,
+      5
+    ],
+    "target_min_ha": 1,
+    "mixed_ndvi_difference": 0.15
   }
 }
