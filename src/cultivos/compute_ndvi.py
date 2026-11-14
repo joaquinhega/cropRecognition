@@ -64,15 +64,19 @@ def write_ndvi(path: Path, ndvi: np.ndarray, transform: Affine, crs: CRS) -> Non
         dst.set_band_description(1, "ndvi")
 
 
-def write_preview(path: Path, ndvi: np.ndarray, settings: dict) -> None:
+def render_ndvi(ndvi: np.ndarray, settings: dict) -> np.ndarray:
     low, high = settings["min"], settings["max"]
     position = np.clip((np.nan_to_num(ndvi) - low) / (high - low), 0, 1)
     colors = np.array(RAMP_COLORS, dtype="float32")
-    rgb = np.stack(
-        [np.interp(position, RAMP_POSITIONS, colors[:, channel]) for channel in range(3)],
-        axis=-1,
-    ).astype("uint8")
-    rgb[np.isnan(ndvi)] = MASKED_COLOR
+    channels = [np.interp(position, RAMP_POSITIONS, colors[:, channel]) for channel in range(3)]
+    alpha = np.where(np.isnan(ndvi), 0, 255)
+    return np.stack([*channels, alpha], axis=-1).astype("uint8")
+
+
+def write_preview(path: Path, ndvi: np.ndarray, settings: dict) -> None:
+    rgba = render_ndvi(ndvi, settings)
+    rgb = rgba[..., :3].copy()
+    rgb[rgba[..., 3] == 0] = MASKED_COLOR
     image = Image.fromarray(rgb)
     factor = settings["scale"]
     image.resize((image.width * factor, image.height * factor), Image.Resampling.NEAREST).save(path)

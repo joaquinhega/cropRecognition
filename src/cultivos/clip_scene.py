@@ -68,11 +68,15 @@ def write_geotiff(path: Path, bands: dict[str, np.ndarray], transform: Affine, c
             dst.set_band_description(index, name)
 
 
-def write_preview(path: Path, bands: dict[str, np.ndarray], imagery: dict) -> None:
+def render_rgb(bands: dict[str, np.ndarray], imagery: dict) -> np.ndarray:
     rgb = np.stack([bands["red"], bands["green"], bands["blue"]], axis=-1).astype("float32")
     reflectance = (rgb - imagery["dn_offset"]) / imagery["dn_scale"]
     scaled = np.clip(reflectance / imagery["preview"]["max_reflectance"], 0, 1)
-    image = Image.fromarray((scaled * 255).astype("uint8"))
+    return (scaled * 255).astype("uint8")
+
+
+def write_preview(path: Path, bands: dict[str, np.ndarray], imagery: dict) -> None:
+    image = Image.fromarray(render_rgb(bands, imagery))
     factor = imagery["preview"]["scale"]
     image.resize((image.width * factor, image.height * factor), Image.Resampling.NEAREST).save(path)
 
