@@ -1,0 +1,20 @@
+{
+  "path": "data/labels/etiquetas-v1.geojson",
+  "satellite": "Sentinel-2",
+  "campaign": "2025/26",
+  "polygon_source": "dibujo manual",
+  "area_crs": "EPSG:32719",
+  "min_area_ha": 1,
+  "utc_offset_hours": -3,
+  "classes": ["vid", "otros"],
+  "confidence_levels": ["alta", "media", "baja"],
+  "default_confidence": "media",
+  "criteria": [
+    "hileras de espaldero",
+    "parral",
+    "suelo desnudo",
+    "olivo",
+    "frutal",
+    "otro"
+  ]
+}

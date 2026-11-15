@@ -2,11 +2,44 @@ import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Response
+from pydantic import BaseModel
 
 from cultivos.config import load_zone_config
+from cultivos.labels import (
+    LabelError,
+    LabelNotFound,
+    create_label,
+    delete_label,
+    label_options,
+    read_labels,
+    update_label,
+)
 from cultivos.viewer import LAYERS, image_bounds, list_dates, render_png
 
 app = FastAPI(title="cropRecognition API")
+
+
+class NewLabel(BaseModel):
+    clase: str
+    vertices: list[tuple[float, float]]
+    fecha: str
+    criterio: str = ""
+    confianza: str | None = None
+
+
+class LabelChanges(BaseModel):
+    clase: str | None = None
+    criterio: str | None = None
+    confianza: str | None = None
+
+
+def _run_label_action(action, *args, **kwargs):
+    try:
+        return action(*args, **kwargs)
+    except LabelNotFound as error:
+        raise HTTPException(status_code=404, detail=f"No existe la etiqueta {error}.")
+    except LabelError as error:
+        raise HTTPException(status_code=422, detail=str(error))
 
 
 @app.get("/health")
@@ -44,3 +77,31 @@ def imagery_image(date: str, layer: str) -> Response:
             detail=f"No hay datos para {date}. Ejecutá clip_scene y compute_ndvi para esa fecha.",
         )
     return Response(content=png, media_type="image/png")
+
+
+@app.get("/labels/options")
+def labels_options() -> dict:
+    return label_options()
+
+
+@app.get("/labels")
+def labels() -> dict:
+    return read_labels()
+
+
+@app.post("/labels")
+def labels_create(body: NewLabel) -> dict:
+    return _run_label_action(
+        create_label, body.clase, body.vertices, body.fecha, body.criterio, body.confianza
+    )
+
+
+@app.patch("/labels/{id_lote}")
+def labels_update(id_lote: str, body: LabelChanges) -> dict:
+    return _run_label_action(update_label, id_lote, body.clase, body.criterio, body.confianza)
+
+
+@app.delete("/labels/{id_lote}", status_code=204)
+def labels_delete(id_lote: str) -> Response:
+    _run_label_action(delete_label, id_lote)
+    return Response(status_code=204)

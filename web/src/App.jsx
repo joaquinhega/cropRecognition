@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { GeoJSON, ImageOverlay, LayersControl, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import LabelDetails from "./LabelDetails.jsx";
 import { LABEL_CLASSES, LabelPolygons, PolygonDrawer, classColor } from "./LabelTools.jsx";
+import { createLabel, deleteLabel, fetchLabelOptions, fetchLabels, updateLabel } from "./labelsApi.js";
 
 const BOUNDARY_STYLE = { color: "#b03a2e", weight: 2, fillOpacity: 0.08 };
 const BOUNDARY_ATTRIBUTION = "Límite: IGN vía datos.gob.ar (CC BY 4.0)";
@@ -39,24 +41,39 @@ export default function App() {
   const [labeling, setLabeling] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [labels, setLabels] = useState([]);
+  const [labelOptions, setLabelOptions] = useState(null);
+  const [labelError, setLabelError] = useState(null);
   const [activeClass, setActiveClass] = useState(LABEL_CLASSES[0].id);
   const [selectedId, setSelectedId] = useState(null);
-  const nextLabelId = useRef(1);
 
-  function addLabel(points) {
-    const id = nextLabelId.current++;
-    setLabels((current) => [...current, { id, cls: activeClass, points }]);
-    setSelectedId(id);
+  async function saveChange(action) {
+    setLabelError(null);
+    try {
+      await action();
+    } catch (failure) {
+      setLabelError(`No se pudo guardar: ${failure.message}`);
+    }
   }
 
-  function changeSelectedClass(cls) {
-    setLabels((current) => current.map((label) => (label.id === selectedId ? { ...label, cls } : label)));
-  }
+  const addLabel = (points) =>
+    saveChange(async () => {
+      const label = await createLabel({ cls: activeClass, points, date });
+      setLabels((current) => [...current, label]);
+      setSelectedId(label.id);
+    });
 
-  function deleteSelected() {
-    setLabels((current) => current.filter((label) => label.id !== selectedId));
-    setSelectedId(null);
-  }
+  const changeSelected = (changes) =>
+    saveChange(async () => {
+      const updated = await updateLabel(selectedId, changes);
+      setLabels((current) => current.map((label) => (label.id === updated.id ? updated : label)));
+    });
+
+  const deleteSelected = () =>
+    saveChange(async () => {
+      await deleteLabel(selectedId);
+      setLabels((current) => current.filter((label) => label.id !== selectedId));
+      setSelectedId(null);
+    });
 
   function toggleLabeling() {
     setLabeling((current) => !current);
@@ -82,6 +99,13 @@ export default function App() {
       .then((response) => (response.ok ? response.json() : null))
       .then(setBoundary)
       .catch(() => {});
+
+    Promise.all([fetchLabelOptions(), fetchLabels()])
+      .then(([options, saved]) => {
+        setLabelOptions(options);
+        setLabels(saved);
+      })
+      .catch(() => setLabelError("No se pudieron cargar las etiquetas guardadas."));
   }, []);
 
   if (error) return <p className="message">{error}</p>;
@@ -96,6 +120,7 @@ export default function App() {
   }
 
   const selected = imagery.dates.find((item) => item.date === date);
+  const selectedLabel = labels.find((label) => label.id === selectedId);
   const activeLayer = selected.has_ndvi ? layer : "rgb";
 
   return (
@@ -185,27 +210,19 @@ export default function App() {
               {LABEL_CLASSES.map(
                 (item) => `${item.label}: ${labels.filter((label) => label.cls === item.id).length}`,
               ).join(" · ")}
+              {` · Sin criterio: ${labels.filter((label) => !label.criterio).length}`}
             </p>
+            {labelError && <p className="warning">{labelError}</p>}
 
-            {selectedId && !drawing && (
-              <>
-                <h3>Polígono seleccionado</h3>
-                <div className="buttons">
-                  {LABEL_CLASSES.map((item) => (
-                    <button
-                      key={item.id}
-                      className={labels.find((label) => label.id === selectedId).cls === item.id ? "active" : ""}
-                      onClick={() => changeSelectedClass(item.id)}
-                    >
-                      <span className="swatch" style={{ background: classColor(item.id) }} />
-                      Marcar como {item.label.toLowerCase()}
-                    </button>
-                  ))}
-                  <button onClick={deleteSelected}>Borrar</button>
-                </div>
-              </>
+            {selectedLabel && labelOptions && !drawing && (
+              <LabelDetails
+                label={selectedLabel}
+                options={labelOptions}
+                onChange={changeSelected}
+                onDelete={deleteSelected}
+              />
             )}
-            <p className="hint">Los polígonos se pierden al recargar la página (el guardado llega en A2-T2).</p>
+            <p className="hint">Los cambios se guardan solos en data/labels/.</p>
           </>
         )}
       </div>
