@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GeoJSON, ImageOverlay, LayersControl, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { LABEL_CLASSES, LabelPolygons, PolygonDrawer, classColor } from "./LabelTools.jsx";
 
 const BOUNDARY_STYLE = { color: "#b03a2e", weight: 2, fillOpacity: 0.08 };
 const BOUNDARY_ATTRIBUTION = "Límite: IGN vía datos.gob.ar (CC BY 4.0)";
@@ -35,6 +36,33 @@ export default function App() {
   const [date, setDate] = useState(null);
   const [layer, setLayer] = useState("rgb");
   const [opacity, setOpacity] = useState(DEFAULT_OPACITY);
+  const [labeling, setLabeling] = useState(false);
+  const [drawing, setDrawing] = useState(false);
+  const [labels, setLabels] = useState([]);
+  const [activeClass, setActiveClass] = useState(LABEL_CLASSES[0].id);
+  const [selectedId, setSelectedId] = useState(null);
+  const nextLabelId = useRef(1);
+
+  function addLabel(points) {
+    const id = nextLabelId.current++;
+    setLabels((current) => [...current, { id, cls: activeClass, points }]);
+    setSelectedId(id);
+  }
+
+  function changeSelectedClass(cls) {
+    setLabels((current) => current.map((label) => (label.id === selectedId ? { ...label, cls } : label)));
+  }
+
+  function deleteSelected() {
+    setLabels((current) => current.filter((label) => label.id !== selectedId));
+    setSelectedId(null);
+  }
+
+  function toggleLabeling() {
+    setLabeling((current) => !current);
+    setDrawing(false);
+    setSelectedId(null);
+  }
 
   useEffect(() => {
     fetch("/api/health")
@@ -117,6 +145,69 @@ export default function App() {
         {activeLayer === "ndvi" && (
           <p className="hint">Marrón: sin vegetación. Verde oscuro: mucha vegetación. Transparente: nubes o sombras.</p>
         )}
+
+        <h3>Etiquetas</h3>
+        <div className="buttons">
+          <button className={labeling ? "active" : ""} onClick={toggleLabeling}>
+            {labeling ? "Etiquetar: activado" : "Etiquetar: desactivado"}
+          </button>
+        </div>
+
+        {labeling && (
+          <>
+            <h3>Clase del próximo polígono</h3>
+            <div className="buttons">
+              {LABEL_CLASSES.map((item) => (
+                <button
+                  key={item.id}
+                  className={item.id === activeClass ? "active" : ""}
+                  disabled={drawing}
+                  onClick={() => setActiveClass(item.id)}
+                >
+                  <span className="swatch" style={{ background: item.color }} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="buttons spaced">
+              <button className={drawing ? "active" : ""} onClick={() => setDrawing((current) => !current)}>
+                {drawing ? "Cancelar dibujo" : "Dibujar polígono"}
+              </button>
+            </div>
+            {drawing && (
+              <p className="hint">
+                Clic para cada vértice. Para cerrar, clic en el primer punto. Esc cancela.
+              </p>
+            )}
+
+            <p className="hint">
+              {LABEL_CLASSES.map(
+                (item) => `${item.label}: ${labels.filter((label) => label.cls === item.id).length}`,
+              ).join(" · ")}
+            </p>
+
+            {selectedId && !drawing && (
+              <>
+                <h3>Polígono seleccionado</h3>
+                <div className="buttons">
+                  {LABEL_CLASSES.map((item) => (
+                    <button
+                      key={item.id}
+                      className={labels.find((label) => label.id === selectedId).cls === item.id ? "active" : ""}
+                      onClick={() => changeSelectedClass(item.id)}
+                    >
+                      <span className="swatch" style={{ background: classColor(item.id) }} />
+                      Marcar como {item.label.toLowerCase()}
+                    </button>
+                  ))}
+                  <button onClick={deleteSelected}>Borrar</button>
+                </div>
+              </>
+            )}
+            <p className="hint">Los polígonos se pierden al recargar la página (el guardado llega en A2-T2).</p>
+          </>
+        )}
       </div>
 
       <MapContainer className="map" bounds={imagery.bounds} maxZoom={MAX_ZOOM}>
@@ -143,6 +234,17 @@ export default function App() {
           bounds={imagery.bounds}
           opacity={opacity}
         />
+        {labeling && (
+          <>
+            <LabelPolygons labels={labels} selectedId={selectedId} drawing={drawing} onSelect={setSelectedId} />
+            <PolygonDrawer
+              drawing={drawing}
+              color={classColor(activeClass)}
+              onCreated={addLabel}
+              onFinish={() => setDrawing(false)}
+            />
+          </>
+        )}
       </MapContainer>
     </>
   );
