@@ -15,6 +15,7 @@ from cultivos.labels import (
     review_labels,
     update_label,
 )
+from cultivos.series_summary import summarize_series
 from cultivos.split import SplitError, SplitExists, create_split, read_split
 from cultivos.viewer import LAYERS, image_bounds, list_dates, render_png
 
@@ -132,3 +133,8 @@ def split_create() -> dict:
         raise HTTPException(status_code=409, detail=str(error))
     except SplitError as error:
         raise HTTPException(status_code=422, detail=str(error))
+
+
+@app.get("/series/summary")
+def series_summary() -> dict:
+    return summarize_series()

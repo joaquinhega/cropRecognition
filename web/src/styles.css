@@ -119,3 +119,31 @@ body,
   border-radius: 4px;
   font: inherit;
 }
+
+.series-chart {
+  position: absolute;
+  z-index: 1000;
+  bottom: 30px;
+  left: 310px;
+  width: 640px;
+  max-width: calc(100% - 330px);
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+}
+
+.series-chart h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.series-chart .close {
+  float: right;
+  padding: 2px 8px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #f7f7f7;
+  cursor: pointer;
+}

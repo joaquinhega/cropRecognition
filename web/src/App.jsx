@@ -13,6 +13,8 @@ import {
   updateLabel,
 } from "./labelsApi.js";
 import ReviewPanel from "./ReviewPanel.jsx";
+import SeriesChart from "./SeriesChart.jsx";
+import { fetchSeriesSummary } from "./seriesApi.js";
 import SplitBlocks from "./SplitBlocks.jsx";
 import SplitPanel from "./SplitPanel.jsx";
 import { createSplit, fetchSplit } from "./splitApi.js";
@@ -60,6 +62,8 @@ export default function App() {
   const [focus, setFocus] = useState(null);
   const [split, setSplit] = useState(null);
   const [showBlocks, setShowBlocks] = useState(true);
+  const [series, setSeries] = useState(null);
+  const [showSeries, setShowSeries] = useState(false);
 
   function goTo(id) {
     setSelectedId(id);
@@ -147,6 +151,10 @@ export default function App() {
       .then(setSplit)
       .catch(() => {});
 
+    fetchSeriesSummary()
+      .then(setSeries)
+      .catch(() => {});
+
     Promise.all([fetchLabelOptions(), fetchLabels()])
       .then(([options, saved]) => {
         setLabelOptions(options);
@@ -218,6 +226,13 @@ export default function App() {
           <p className="hint">Marrón: sin vegetación. Verde oscuro: mucha vegetación. Transparente: nubes o sombras.</p>
         )}
 
+        <h3>Series de NDVI</h3>
+        <div className="buttons">
+          <button className={showSeries ? "active" : ""} onClick={() => setShowSeries((current) => !current)}>
+            {showSeries ? "Gráfico: visible" : "Gráfico: oculto"}
+          </button>
+        </div>
+
         <h3>Etiquetas</h3>
         <div className="buttons">
           <button className={labeling ? "active" : ""} onClick={toggleLabeling}>
@@ -286,6 +301,8 @@ export default function App() {
           </>
         )}
       </div>
+
+      {showSeries && <SeriesChart summary={series} onClose={() => setShowSeries(false)} />}
 
       <MapContainer className="map" bounds={imagery.bounds} maxZoom={MAX_ZOOM}>
         <LayersControl position="bottomright">
