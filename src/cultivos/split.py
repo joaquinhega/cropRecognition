@@ -87,6 +87,20 @@ def read_split() -> dict:
     }
 
 
+def test_rectangles() -> list[tuple[float, float, float, float]]:
+    path = Path(load_split_config()["path"])
+    if not path.exists():
+        raise SplitError("La partición no existe. Hay que crearla primero (A2-T4).")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    grid = data["grid"]
+    rectangles = []
+    for block in data["test_blocks"]:
+        row, col = map(int, block[1:].split("C"))
+        x, y = grid["x0"] + col * grid["size"], grid["y0"] + row * grid["size"]
+        rectangles.append((x, y, x + grid["size"], y + grid["size"]))
+    return rectangles
+
+
 def _grid(config: dict) -> dict:
     west, south, east, north = load_zone_config()["work_area"]["bbox"]
     xs, ys = transform("EPSG:4326", config["crs"], [west, east, west, east], [south, south, north, north])

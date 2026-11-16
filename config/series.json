@@ -3,5 +3,15 @@
   "months": 12,
   "max_scene_cloud_cover": 80,
   "dates_path": "data/processed/series-dates.json",
-  "output_path": "data/processed/series-v1.csv"
+  "output_path": "data/processed/series-v1.csv",
+  "train_path": "data/processed/train-v1.csv",
+  "test_path": "data/processed/test-v1.csv",
+  "buffer_m": 100,
+  "train_confidence": [
+    "alta",
+    "media"
+  ],
+  "test_confidence": [
+    "alta"
+  ]
 }
