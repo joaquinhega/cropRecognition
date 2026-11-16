@@ -81,6 +81,24 @@ def write_preview(path: Path, bands: dict[str, np.ndarray], imagery: dict) -> No
     image.resize((image.width * factor, image.height * factor), Image.Resampling.NEAREST).save(path)
 
 
+def clip_item(item: Item, day: str, bbox: list[float], imagery: dict) -> dict:
+    bands: dict[str, np.ndarray] = {}
+    for name in imagery["bands"]:
+        bands[name], transform, crs, grid = read_clip(item.assets[name].href, bbox)
+
+    scl, scl_transform, scl_crs, _ = read_clip(item.assets[imagery["scl_band"]].href, bbox)
+
+    raw_dir = Path(imagery["raw_dir"])
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    stem = f"{day}_{imagery['tile']}"
+
+    bands_path = raw_dir / f"{stem}.tif"
+    scl_path = raw_dir / f"{stem}_scl.tif"
+    write_geotiff(bands_path, bands, transform, crs)
+    write_geotiff(scl_path, {"scl": scl}, scl_transform, scl_crs)
+    return {"bands": bands, "bands_path": bands_path, "scl_path": scl_path, "crs": crs, "grid": grid, "stem": stem}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", required=True, help="Scene date, YYYY-MM-DD")
@@ -94,30 +112,18 @@ def main() -> None:
     item = find_item(args.date, bbox, imagery)
     print(f"Scene: {item.id}, cloud cover {item.properties['eo:cloud_cover']:.1f}%")
 
-    bands: dict[str, np.ndarray] = {}
-    for name in imagery["bands"]:
-        bands[name], transform, crs, grid = read_clip(item.assets[name].href, bbox)
-
-    scl, scl_transform, scl_crs, _ = read_clip(item.assets[imagery["scl_band"]].href, bbox)
-
-    raw_dir = Path(imagery["raw_dir"])
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    stem = f"{args.date}_{imagery['tile']}"
-
-    bands_path = raw_dir / f"{stem}.tif"
-    scl_path = raw_dir / f"{stem}_scl.tif"
-    write_geotiff(bands_path, bands, transform, crs)
-    write_geotiff(scl_path, {"scl": scl}, scl_transform, scl_crs)
+    clip = clip_item(item, args.date, bbox, imagery)
+    bands, bands_path, scl_path, grid = clip["bands"], clip["bands_path"], clip["scl_path"], clip["grid"]
 
     height, width = next(iter(bands.values())).shape
     share = 100 * (width * height) / (grid[0] * grid[1])
-    print(f"CRS: {crs}")
+    print(f"CRS: {clip['crs']}")
     print(f"Clip: {width} x {height} px of a {grid[0]} x {grid[1]} px scene ({share:.3f}%)")
     print(f"Saved: {bands_path} ({bands_path.stat().st_size / 1024:.0f} KB)")
     print(f"Saved: {scl_path} ({scl_path.stat().st_size / 1024:.0f} KB)")
 
     if args.preview:
-        preview_path = raw_dir / f"{stem}_preview.png"
+        preview_path = Path(imagery["raw_dir"]) / f"{clip['stem']}_preview.png"
         write_preview(preview_path, bands, imagery)
         print(f"Saved: {preview_path} ({preview_path.stat().st_size / 1024:.0f} KB)")
 

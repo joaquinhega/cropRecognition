@@ -1,0 +1,7 @@
+{
+  "start_month": "2025-11",
+  "months": 12,
+  "max_scene_cloud_cover": 80,
+  "dates_path": "data/processed/series-dates.json",
+  "output_path": "data/processed/series-v1.csv"
+}

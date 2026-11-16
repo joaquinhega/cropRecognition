@@ -82,20 +82,18 @@ def write_preview(path: Path, ndvi: np.ndarray, settings: dict) -> None:
     image.resize((image.width * factor, image.height * factor), Image.Resampling.NEAREST).save(path)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--date", required=True, help="Scene date, YYYY-MM-DD")
-    parser.add_argument("--preview", action="store_true", help="Also save a colored PNG")
-    args = parser.parse_args()
+def ndvi_path_for(day: str, imagery: dict) -> Path:
+    return Path(imagery["processed_dir"]) / f"{day}_{imagery['tile']}_ndvi.tif"
 
-    imagery = load_imagery_config()
+
+def build_ndvi(day: str, imagery: dict) -> tuple[np.ndarray, np.ndarray, Path]:
     settings = imagery["ndvi"]
-    stem = f"{args.date}_{imagery['tile']}"
+    stem = f"{day}_{imagery['tile']}"
     raw_dir = Path(imagery["raw_dir"])
     bands_path = raw_dir / f"{stem}.tif"
     scl_path = raw_dir / f"{stem}_scl.tif"
     if not bands_path.exists() or not scl_path.exists():
-        raise SystemExit(f"Missing clip for {args.date}. Run cultivos.clip_scene first")
+        raise SystemExit(f"Missing clip for {day}. Run cultivos.clip_scene first")
 
     bands, transform, crs = load_bands(bands_path)
     red = to_reflectance(bands["red"], imagery)
@@ -106,10 +104,21 @@ def main() -> None:
     discarded = np.isin(scl, settings["invalid_scl_classes"])
     ndvi[discarded] = np.nan
 
-    processed_dir = Path(imagery["processed_dir"])
-    processed_dir.mkdir(parents=True, exist_ok=True)
-    ndvi_path = processed_dir / f"{stem}_ndvi.tif"
+    ndvi_path = ndvi_path_for(day, imagery)
+    ndvi_path.parent.mkdir(parents=True, exist_ok=True)
     write_ndvi(ndvi_path, ndvi, transform, crs)
+    return ndvi, discarded, ndvi_path
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--date", required=True, help="Scene date, YYYY-MM-DD")
+    parser.add_argument("--preview", action="store_true", help="Also save a colored PNG")
+    args = parser.parse_args()
+
+    imagery = load_imagery_config()
+    settings = imagery["ndvi"]
+    ndvi, discarded, ndvi_path = build_ndvi(args.date, imagery)
 
     valid = ~np.isnan(ndvi)
     print(f"Date: {args.date}")
@@ -123,7 +132,7 @@ def main() -> None:
     print(f"Saved: {ndvi_path} ({ndvi_path.stat().st_size / 1024:.0f} KB)")
 
     if args.preview:
-        preview_path = processed_dir / f"{stem}_ndvi_preview.png"
+        preview_path = ndvi_path.with_name(f"{ndvi_path.stem}_preview.png")
         write_preview(preview_path, ndvi, settings["preview"])
         print(f"Saved: {preview_path} ({preview_path.stat().st_size / 1024:.0f} KB)")
 

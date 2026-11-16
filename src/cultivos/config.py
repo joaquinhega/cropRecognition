@@ -5,6 +5,7 @@ ZONE_CONFIG_PATH = Path("config/zone.json")
 IMAGERY_CONFIG_PATH = Path("config/imagery.json")
 LABELS_CONFIG_PATH = Path("config/labels.json")
 SPLIT_CONFIG_PATH = Path("config/split.json")
+SERIES_CONFIG_PATH = Path("config/series.json")
 
 
 def _load(path: Path) -> dict:
@@ -25,3 +26,7 @@ def load_labels_config() -> dict:
 
 def load_split_config() -> dict:
     return _load(SPLIT_CONFIG_PATH)
+
+
+def load_series_config() -> dict:
+    return _load(SERIES_CONFIG_PATH)
