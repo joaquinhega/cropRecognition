@@ -15,6 +15,7 @@ from cultivos.labels import (
     review_labels,
     update_label,
 )
+from cultivos.split import SplitError, SplitExists, create_split, read_split
 from cultivos.viewer import LAYERS, image_bounds, list_dates, render_png
 
 app = FastAPI(title="cropRecognition API")
@@ -116,3 +117,18 @@ def labels_update(id_lote: str, body: LabelChanges) -> dict:
 def labels_delete(id_lote: str) -> Response:
     _run_label_action(delete_label, id_lote)
     return Response(status_code=204)
+
+
+@app.get("/split")
+def split() -> dict:
+    return read_split()
+
+
+@app.post("/split")
+def split_create() -> dict:
+    try:
+        return create_split()
+    except SplitExists as error:
+        raise HTTPException(status_code=409, detail=str(error))
+    except SplitError as error:
+        raise HTTPException(status_code=422, detail=str(error))

@@ -1,0 +1,10 @@
+{
+  "path": "data/labels/split-v1.json",
+  "crs": "EPSG:32719",
+  "block_size_m": 500,
+  "pixel_size_m": 10,
+  "test_fraction": 0.3,
+  "seed": 42,
+  "max_attempts": 500,
+  "min_labels_per_class": 5
+}

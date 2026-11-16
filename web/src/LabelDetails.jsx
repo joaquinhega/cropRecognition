@@ -26,14 +26,17 @@ function CriterioInput({ value, suggestions, onSave }) {
   );
 }
 
-export default function LabelDetails({ label, options, onChange, onDelete, onMarkReviewed }) {
+export default function LabelDetails({ label, options, role, onChange, onDelete, onMarkReviewed }) {
   return (
     <>
       <h3>Polígono {label.id}</h3>
       <p className="hint">
         {label.areaHa.toLocaleString("es-AR")} ha · Sentinel-2, {label.imageDate}
       </p>
-      <p className="hint">Estado: {label.estado}</p>
+      <p className="hint">
+        Estado: {label.estado}
+        {role && ` · Partición: ${role}`}
+      </p>
       {label.estado === "borrador" && label.reasons.length > 0 && (
         <p className="warning">A revisar: {label.reasons.join(", ")}.</p>
       )}

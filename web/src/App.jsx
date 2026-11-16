@@ -13,6 +13,9 @@ import {
   updateLabel,
 } from "./labelsApi.js";
 import ReviewPanel from "./ReviewPanel.jsx";
+import SplitBlocks from "./SplitBlocks.jsx";
+import SplitPanel from "./SplitPanel.jsx";
+import { createSplit, fetchSplit } from "./splitApi.js";
 
 const BOUNDARY_STYLE = { color: "#b03a2e", weight: 2, fillOpacity: 0.08 };
 const BOUNDARY_ATTRIBUTION = "Límite: IGN vía datos.gob.ar (CC BY 4.0)";
@@ -55,6 +58,8 @@ export default function App() {
   const [activeClass, setActiveClass] = useState(LABEL_CLASSES[0].id);
   const [selectedId, setSelectedId] = useState(null);
   const [focus, setFocus] = useState(null);
+  const [split, setSplit] = useState(null);
+  const [showBlocks, setShowBlocks] = useState(true);
 
   function goTo(id) {
     setSelectedId(id);
@@ -65,10 +70,17 @@ export default function App() {
     setLabelError(null);
     try {
       await action();
+      if (split?.created) setSplit(await fetchSplit());
     } catch (failure) {
       setLabelError(`No se pudo guardar: ${failure.message}`);
     }
   }
+
+  const makeSplit = () =>
+    saveChange(async () => {
+      setSplit(await createSplit());
+      setShowBlocks(true);
+    });
 
   const addLabel = (points) =>
     saveChange(async () => {
@@ -129,6 +141,10 @@ export default function App() {
     fetch("/api/boundary")
       .then((response) => (response.ok ? response.json() : null))
       .then(setBoundary)
+      .catch(() => {});
+
+    fetchSplit()
+      .then(setSplit)
       .catch(() => {});
 
     Promise.all([fetchLabelOptions(), fetchLabels()])
@@ -256,8 +272,16 @@ export default function App() {
                 onChange={changeSelected}
                 onDelete={deleteSelected}
                 onMarkReviewed={markReviewed}
+                role={split?.roles?.[selectedLabel.id]}
               />
             )}
+
+            <SplitPanel
+              split={split}
+              showBlocks={showBlocks}
+              onToggleBlocks={() => setShowBlocks((current) => !current)}
+              onCreate={makeSplit}
+            />
             <p className="hint">Los cambios se guardan solos en data/labels/.</p>
           </>
         )}
@@ -289,6 +313,7 @@ export default function App() {
         />
         {labeling && (
           <>
+            {split?.created && showBlocks && <SplitBlocks split={split} />}
             <LabelPolygons labels={labels} selectedId={selectedId} drawing={drawing} onSelect={setSelectedId} />
             <FocusLabel label={labels.find((label) => label.id === focus?.id)} focusKey={focus?.key} />
             <PolygonDrawer

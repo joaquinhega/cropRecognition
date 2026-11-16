@@ -177,6 +177,10 @@ def _check_choice(value: str, allowed: list[str], name: str) -> None:
         raise LabelError(f"Valor inválido para {name}: {value}. Opciones: {', '.join(allowed)}.")
 
 
+def today_iso() -> str:
+    return _today(load_labels_config())
+
+
 def _today(config: dict) -> str:
     offset = timezone(timedelta(hours=config["utc_offset_hours"]))
     return datetime.now(offset).date().isoformat()
