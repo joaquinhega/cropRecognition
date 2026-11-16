@@ -6,8 +6,15 @@
   "area_crs": "EPSG:32719",
   "min_area_ha": 1,
   "utc_offset_hours": -3,
-  "classes": ["vid", "otros"],
-  "confidence_levels": ["alta", "media", "baja"],
+  "classes": [
+    "vid",
+    "otros"
+  ],
+  "confidence_levels": [
+    "alta",
+    "media",
+    "baja"
+  ],
   "default_confidence": "media",
   "criteria": [
     "hileras de espaldero",
@@ -16,5 +23,21 @@
     "olivo",
     "frutal",
     "otro"
-  ]
+  ],
+  "editable_states": [
+    "borrador",
+    "revisada"
+  ],
+  "criteria_by_class": {
+    "vid": [
+      "hileras de espaldero",
+      "parral"
+    ],
+    "otros": [
+      "suelo desnudo",
+      "olivo",
+      "frutal",
+      "otro"
+    ]
+  }
 }

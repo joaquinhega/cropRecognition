@@ -20,8 +20,13 @@ function toLabel(feature) {
     areaHa: properties.area_ha,
     small: properties.menor_al_minimo,
     imageDate: properties.imagen_referencia.fecha,
+    estado: properties.estado,
+    reasons: properties.motivos_revision,
   };
 }
+
+export const isPending = (label) => label.estado === "borrador" && label.reasons.length > 0;
+export const isUndoubted = (label) => label.estado === "borrador" && label.reasons.length === 0;
 
 export const fetchLabelOptions = () => request("/labels/options");
 
@@ -49,3 +54,12 @@ export async function updateLabel(id, changes) {
 }
 
 export const deleteLabel = (id) => request(`/labels/${id}`, { method: "DELETE" });
+
+export async function reviewLabels(ids) {
+  const features = await request("/labels/review", {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ ids }),
+  });
+  return features.map(toLabel);
+}

@@ -12,6 +12,7 @@ from cultivos.labels import (
     delete_label,
     label_options,
     read_labels,
+    review_labels,
     update_label,
 )
 from cultivos.viewer import LAYERS, image_bounds, list_dates, render_png
@@ -31,6 +32,11 @@ class LabelChanges(BaseModel):
     clase: str | None = None
     criterio: str | None = None
     confianza: str | None = None
+    estado: str | None = None
+
+
+class ReviewRequest(BaseModel):
+    ids: list[str]
 
 
 def _run_label_action(action, *args, **kwargs):
@@ -96,9 +102,14 @@ def labels_create(body: NewLabel) -> dict:
     )
 
 
+@app.post("/labels/review")
+def labels_review(body: ReviewRequest) -> list[dict]:
+    return _run_label_action(review_labels, body.ids)
+
+
 @app.patch("/labels/{id_lote}")
 def labels_update(id_lote: str, body: LabelChanges) -> dict:
-    return _run_label_action(update_label, id_lote, body.clase, body.criterio, body.confianza)
+    return _run_label_action(update_label, id_lote, body.clase, body.criterio, body.confianza, body.estado)
 
 
 @app.delete("/labels/{id_lote}", status_code=204)

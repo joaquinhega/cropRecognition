@@ -26,13 +26,17 @@ function CriterioInput({ value, suggestions, onSave }) {
   );
 }
 
-export default function LabelDetails({ label, options, onChange, onDelete }) {
+export default function LabelDetails({ label, options, onChange, onDelete, onMarkReviewed }) {
   return (
     <>
       <h3>Polígono {label.id}</h3>
       <p className="hint">
         {label.areaHa.toLocaleString("es-AR")} ha · Sentinel-2, {label.imageDate}
       </p>
+      <p className="hint">Estado: {label.estado}</p>
+      {label.estado === "borrador" && label.reasons.length > 0 && (
+        <p className="warning">A revisar: {label.reasons.join(", ")}.</p>
+      )}
       {label.small && (
         <p className="warning">
           Menor a {options.min_area_ha} ha: no se usará para entrenar ni evaluar.
@@ -77,6 +81,14 @@ export default function LabelDetails({ label, options, onChange, onDelete }) {
       <p className="hint">Alta: seguro. Media: hay otra opción posible. Baja: dudoso, no se usa.</p>
 
       <div className="buttons spaced">
+        {label.estado === "borrador" && (
+          <button disabled={!label.criterio} onClick={onMarkReviewed}>
+            Marcar como revisada
+          </button>
+        )}
+        {label.estado === "revisada" && (
+          <button onClick={() => onChange({ estado: "borrador" })}>Reabrir (volver a borrador)</button>
+        )}
         <button onClick={onDelete}>Borrar</button>
       </div>
     </>

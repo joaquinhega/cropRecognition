@@ -2,8 +2,17 @@ import { useEffect, useState } from "react";
 import { GeoJSON, ImageOverlay, LayersControl, MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import LabelDetails from "./LabelDetails.jsx";
-import { LABEL_CLASSES, LabelPolygons, PolygonDrawer, classColor } from "./LabelTools.jsx";
-import { createLabel, deleteLabel, fetchLabelOptions, fetchLabels, updateLabel } from "./labelsApi.js";
+import { FocusLabel, LABEL_CLASSES, LabelPolygons, PolygonDrawer, classColor } from "./LabelTools.jsx";
+import {
+  createLabel,
+  deleteLabel,
+  fetchLabelOptions,
+  fetchLabels,
+  isPending,
+  reviewLabels,
+  updateLabel,
+} from "./labelsApi.js";
+import ReviewPanel from "./ReviewPanel.jsx";
 
 const BOUNDARY_STYLE = { color: "#b03a2e", weight: 2, fillOpacity: 0.08 };
 const BOUNDARY_ATTRIBUTION = "Límite: IGN vía datos.gob.ar (CC BY 4.0)";
@@ -45,6 +54,12 @@ export default function App() {
   const [labelError, setLabelError] = useState(null);
   const [activeClass, setActiveClass] = useState(LABEL_CLASSES[0].id);
   const [selectedId, setSelectedId] = useState(null);
+  const [focus, setFocus] = useState(null);
+
+  function goTo(id) {
+    setSelectedId(id);
+    setFocus((current) => ({ id, key: (current?.key ?? 0) + 1 }));
+  }
 
   async function saveChange(action) {
     setLabelError(null);
@@ -66,6 +81,22 @@ export default function App() {
     saveChange(async () => {
       const updated = await updateLabel(selectedId, changes);
       setLabels((current) => current.map((label) => (label.id === updated.id ? updated : label)));
+    });
+
+  const markReviewed = () =>
+    saveChange(async () => {
+      const pendingIds = labels.filter(isPending).map((label) => label.id);
+      const index = pendingIds.indexOf(selectedId);
+      const updated = await updateLabel(selectedId, { estado: "revisada" });
+      setLabels((current) => current.map((label) => (label.id === updated.id ? updated : label)));
+      const next = pendingIds.slice(index + 1).concat(pendingIds.slice(0, Math.max(index, 0)))[0];
+      if (next) goTo(next);
+    });
+
+  const reviewMany = (ids) =>
+    saveChange(async () => {
+      const updated = await reviewLabels(ids);
+      setLabels((current) => current.map((label) => updated.find((item) => item.id === label.id) ?? label));
     });
 
   const deleteSelected = () =>
@@ -214,12 +245,17 @@ export default function App() {
             </p>
             {labelError && <p className="warning">{labelError}</p>}
 
+            {!drawing && (
+              <ReviewPanel labels={labels} selectedId={selectedId} onGo={goTo} onReviewMany={reviewMany} />
+            )}
+
             {selectedLabel && labelOptions && !drawing && (
               <LabelDetails
                 label={selectedLabel}
                 options={labelOptions}
                 onChange={changeSelected}
                 onDelete={deleteSelected}
+                onMarkReviewed={markReviewed}
               />
             )}
             <p className="hint">Los cambios se guardan solos en data/labels/.</p>
@@ -254,6 +290,7 @@ export default function App() {
         {labeling && (
           <>
             <LabelPolygons labels={labels} selectedId={selectedId} drawing={drawing} onSelect={setSelectedId} />
+            <FocusLabel label={labels.find((label) => label.id === focus?.id)} focusKey={focus?.key} />
             <PolygonDrawer
               drawing={drawing}
               color={classColor(activeClass)}

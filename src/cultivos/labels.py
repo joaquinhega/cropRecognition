@@ -10,6 +10,7 @@ from cultivos.viewer import list_dates
 
 FROZEN_STATE = "congelada"
 DRAFT_STATE = "borrador"
+REVIEWED_STATE = "revisada"
 
 
 class LabelError(ValueError):
@@ -27,7 +28,24 @@ def label_options() -> dict:
 
 
 def read_labels() -> dict:
-    return _read(load_labels_config())
+    config = load_labels_config()
+    collection = _read(config)
+    return {**collection, "features": [_with_review(feature, config) for feature in collection["features"]]}
+
+
+def review_reasons(properties: dict, config: dict) -> list[str]:
+    reasons = []
+    if not properties["criterio"]:
+        reasons.append("sin criterio")
+    if properties["confianza"] == "media":
+        reasons.append("confianza media")
+    if properties["confianza"] == "baja":
+        reasons.append("confianza baja")
+    for clase, criteria in config["criteria_by_class"].items():
+        if clase != properties["clase"] and properties["criterio"] in criteria:
+            if properties["criterio"] not in config["criteria_by_class"][properties["clase"]]:
+                reasons.append("el criterio parece de otra clase")
+    return reasons
 
 
 def create_label(clase: str, vertices: list, fecha: str, criterio: str = "", confianza: str | None = None) -> dict:
@@ -69,10 +87,16 @@ def create_label(clase: str, vertices: list, fecha: str, criterio: str = "", con
     }
     collection["features"].append(feature)
     _write(config, collection)
-    return feature
+    return _with_review(feature, config)
 
 
-def update_label(id_lote: str, clase: str | None = None, criterio: str | None = None, confianza: str | None = None) -> dict:
+def update_label(
+    id_lote: str,
+    clase: str | None = None,
+    criterio: str | None = None,
+    confianza: str | None = None,
+    estado: str | None = None,
+) -> dict:
     config = load_labels_config()
     collection = _read(config)
     feature = _find(collection, id_lote)
@@ -88,10 +112,27 @@ def update_label(id_lote: str, clase: str | None = None, criterio: str | None = 
         properties["confianza"] = confianza
     if criterio is not None:
         properties["criterio"] = criterio.strip()
+    if estado is not None:
+        _check_choice(estado, config["editable_states"], "estado")
+        properties["estado"] = estado
     properties["fecha_revision"] = _today(config)
 
     _write(config, collection)
-    return feature
+    return _with_review(feature, config)
+
+
+def review_labels(ids: list[str]) -> list[dict]:
+    config = load_labels_config()
+    collection = _read(config)
+    features = [_find(collection, id_lote) for id_lote in ids]
+    today = _today(config)
+    for feature in features:
+        if feature["properties"]["estado"] == FROZEN_STATE:
+            continue
+        feature["properties"]["estado"] = REVIEWED_STATE
+        feature["properties"]["fecha_revision"] = today
+    _write(config, collection)
+    return [_with_review(feature, config) for feature in features]
 
 
 def delete_label(id_lote: str) -> None:
@@ -102,6 +143,11 @@ def delete_label(id_lote: str) -> None:
         raise LabelError("La etiqueta está congelada y no se puede borrar.")
     collection["features"].remove(feature)
     _write(config, collection)
+
+
+def _with_review(feature: dict, config: dict) -> dict:
+    properties = {**feature["properties"], "motivos_revision": review_reasons(feature["properties"], config)}
+    return {**feature, "properties": properties}
 
 
 def _read(config: dict) -> dict:

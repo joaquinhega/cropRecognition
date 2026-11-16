@@ -66,3 +66,16 @@ export function LabelPolygons({ labels, selectedId, drawing, onSelect }) {
     );
   });
 }
+
+export function FocusLabel({ label, focusKey }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!label) return;
+    map.fitBounds(L.latLngBounds(label.points), {
+      maxZoom: 18,
+      paddingTopLeft: [320, 40],
+      paddingBottomRight: [40, 40],
+    });
+  }, [focusKey]);
+  return null;
+}
