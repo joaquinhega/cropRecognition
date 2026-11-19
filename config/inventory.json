@@ -1,0 +1,31 @@
+{
+  "output_dir": "data/inventory",
+  "area_crs": "EPSG:32719",
+  "oases": {
+    "Valle de Uco": [-69.6, -34.0, -68.9, -33.3],
+    "Norte": [-69.3, -33.4, -68.65, -32.6],
+    "Este": [-68.65, -33.4, -67.6, -32.9],
+    "Sur": [-68.6, -35.3, -67.5, -34.4]
+  },
+  "osm": {
+    "overpass_url": "https://overpass-api.de/api/interpreter",
+    "timeout_s": 300,
+    "province_iso": "AR-M",
+    "layers": {
+      "vineyard": "[\"landuse\"=\"vineyard\"]",
+      "orchard": "[\"landuse\"=\"orchard\"]",
+      "farmland_crop": "[\"landuse\"=\"farmland\"][\"crop\"]"
+    },
+    "reference_layer": "vineyard",
+    "reference_area_ha": 148996,
+    "reference_note": "INV, vid en Mendoza al 31/12/2021",
+    "review_sample_size": 30,
+    "review_seed": 42
+  },
+  "mnc": {
+    "zenodo_api_url": "https://zenodo.org/api/records/",
+    "record_id": "13984185",
+    "record_note": "Mapa Nacional de Cultivos 2023/24 (verificado); para 2024/25 buscar el registro en Zenodo",
+    "pixel_ha": 0.09
+  }
+}
