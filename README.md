@@ -6,7 +6,7 @@ Plataforma intermediaria de datos satelitales para el agro: se conecta a fuentes
 
 - **A · Reconocedor de vid (Agrelo):** cerrado. Etiquetas, series de NDVI y tablas de entrenamiento.
 - **B · Datos y fuentes:** cerrado. Catálogo propio (eoAPI), adaptadores de Earth Search (Sentinel-2), NASA POWER (clima) y CONAE (SAOCOM, solo búsqueda), visor con modos Explorar y Etiquetar.
-- **C · Parcelas:** en curso. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela.
+- **C · Parcelas:** en curso. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela. Procesamiento en segundo plano: índices mensuales (NDVI, NDRE, NDMI, EVI) y clima por campaña.
 - **D a F:** reconocimiento, API pública e interfaz final, fuentes pagas.
 
 ## Servicios
@@ -14,7 +14,8 @@ Plataforma intermediaria de datos satelitales para el agro: se conecta a fuentes
 | Servicio | Qué hace | Dirección local |
 |---|---|---|
 | `web` | Visor (React + Vite + Leaflet) | http://localhost:5173 |
-| `api` | Nuestra API (FastAPI): zonas, fuentes, búsqueda, catálogo, clima, parcelas, etiquetas | http://localhost:8000/docs |
+| `api` | Nuestra API (FastAPI): zonas, fuentes, búsqueda, catálogo, clima, parcelas, tareas, etiquetas | http://localhost:8000/docs |
+| `worker` | Ejecuta las tareas en segundo plano (procesamiento de parcelas); se reinicia solo al cambiar el código | `docker compose logs -f worker` |
 | `stac` | Catálogo STAC propio (STAC-FastAPI) | http://localhost:8081 |
 | `raster` | Teselas de las imágenes del catálogo (TiTiler) | http://localhost:8082/api.html |
 | `database` | Postgres con pgSTAC (catálogo) y PostGIS (parcelas, esquema `platform`) | `localhost:5439` |
@@ -61,6 +62,24 @@ curl.exe -X POST "http://localhost:8000/parcels/import?filename=parcels_sample.k
 
 La tabla `platform.parcels` se crea sola la primera vez que se usa. Superficie geodésica en hectáreas; máximo y mínimo en `config/parcels.json`.
 
+### Procesamiento de parcelas (C2)
+
+En **Mi parcela**, elegir una parcela y **Procesar parcela**: el `worker` busca las imágenes Sentinel-2 de la campaña en curso y las tres anteriores (julio a junio), elige una por mes (la que deja más superficie limpia), calcula NDVI, NDRE, NDMI y EVI sobre los píxeles limpios y trae el clima mensual de NASA POWER. La primera vez tarda unos minutos; al volver a procesar solo calcula los meses abiertos o nuevos. Por la API:
+
+```powershell
+# Encolar (responde enseguida con la tarea)
+curl.exe -X POST "http://localhost:8000/parcels/1/process"
+
+# Estado y avance de la tarea
+curl "http://localhost:8000/jobs/1"
+
+# Resultados
+curl "http://localhost:8000/parcels/1/series"
+curl "http://localhost:8000/parcels/1/climate"
+```
+
+Las tareas viven en `platform.jobs`; si el worker se corta, la tarea vuelve a la cola. Campañas, índices y umbrales en `config/processing.json`.
+
 ### Prueba rápida del catálogo (B1)
 
 ```powershell
@@ -75,7 +94,7 @@ Carga un NDVI de prueba por la API STAC y muestra el enlace del visor de TiTiler
 docker compose run --rm api pytest -q
 ```
 
-Los tests de adaptadores usan respuestas grabadas de las fuentes; los del catálogo y de parcelas usan la base de `docker compose` y borran lo que crean.
+Los tests de adaptadores usan respuestas grabadas de las fuentes; los del catálogo, de parcelas y de procesamiento usan la base de `docker compose` y borran lo que crean. El procesamiento se prueba con escenas sintéticas en disco, sin llamar a las fuentes.
 
 ## Configuración
 
@@ -86,6 +105,7 @@ Todo lo ajustable está en `config/`:
 - `layers.json`: capas de cada colección (bandas, fórmula, colores) y cómo leerlas.
 - `catalog.json`: valores por defecto de búsqueda y de los recortes de A.
 - `parcels.json`: superficie máxima y mínima de una parcela, formatos y tamaño de archivo admitidos.
+- `processing.json`: campañas, bandas e índices, mínimo de superficie limpia por mes, textos de estado y ritmo del worker.
 - `zone.json`, `imagery.json`, `labels.json`, `split.json`, `series.json`, `inventory.json`: subproyecto A y B0.
 
 Puertos y credenciales de la base, en `.env` (ver `.env.example`).
@@ -97,12 +117,14 @@ src/cultivos/
 ├── adapters/      # una fuente por archivo, mismo contrato (base.py)
 ├── catalog/       # pgSTAC: conexión, ingesta, consultas, carga de recortes
 ├── parcels/       # parcelas en PostGIS: validación, lectura de archivos, tabla
-├── api/           # main.py (etiquetas, A), platform.py (B) y parcels.py (C)
+├── modules/       # procesamiento por parcela: campañas, escenas, índices, clima, resultados
+├── jobs/          # cola de tareas en Postgres y worker
+├── api/           # main.py (etiquetas, A), platform.py (B), parcels.py y jobs.py (C)
 ├── zones.py       # zonas y recuadros
 └── ...            # scripts del subproyecto A (recorte, NDVI, etiquetas, series)
 web/src/
 ├── explore/       # modo Explorar: capas, búsqueda, línea de tiempo, clima
-├── parcels/       # modo Mi parcela: dibujar, subir, listar, renombrar, borrar
+├── parcels/       # modo Mi parcela: dibujar, subir, listar, renombrar, borrar, procesar
 ├── label/         # modo Etiquetar (herramienta de A)
 └── map/           # mapas base y utilidades de Leaflet
 tests/             # pytest

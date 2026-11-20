@@ -4,6 +4,10 @@ export function formatDate(date, month = "short") {
   return new Date(`${date}T12:00:00Z`).toLocaleDateString("es-AR", { ...UTC, day: "numeric", month, year: "numeric" });
 }
 
+export function formatDateTime(iso) {
+  return new Date(iso).toLocaleString("es-AR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 export function formatMonth(month) {
   return new Date(`${month}-15T12:00:00Z`).toLocaleDateString("es-AR", { ...UTC, month: "short", year: "2-digit" });
 }

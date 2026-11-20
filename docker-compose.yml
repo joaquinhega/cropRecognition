@@ -5,6 +5,14 @@ x-postgres-env: &postgres-env
   PGHOST: database
   PGPORT: "5432"
 
+x-gdal-env: &gdal-env
+  GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
+  GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: "YES"
+  GDAL_HTTP_MULTIPLEX: "YES"
+  CPL_VSIL_CURL_ALLOWED_EXTENSIONS: .tif,.TIF,.tiff
+  VSI_CACHE: "TRUE"
+  VSI_CACHE_SIZE: "50000000"
+
 services:
   database:
     image: ghcr.io/stac-utils/pgstac:v${PGSTAC_VERSION:-0.9.11}
@@ -49,13 +57,7 @@ services:
     ports:
       - "127.0.0.1:${RASTER_PORT:-8082}:8082"
     environment:
-      <<: *postgres-env
-      GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
-      GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: "YES"
-      GDAL_HTTP_MULTIPLEX: "YES"
-      CPL_VSIL_CURL_ALLOWED_EXTENSIONS: .tif,.TIF,.tiff
-      VSI_CACHE: "TRUE"
-      VSI_CACHE_SIZE: "50000000"
+      <<: [*postgres-env, *gdal-env]
     command: uvicorn titiler.pgstac.main:app --host 0.0.0.0 --port 8082
     volumes:
       - ./data:/app/data:ro
@@ -88,6 +90,24 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    depends_on:
+      database:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    command: watchfiles --filter python "python -m cultivos.jobs.worker" /app/src
+    environment:
+      <<: [*postgres-env, *gdal-env]
+      WATCHFILES_FORCE_POLLING: "true"
+      GDAL_HTTP_MAX_RETRY: "3"
+      GDAL_HTTP_RETRY_DELAY: "1"
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
     depends_on:
       database:
         condition: service_healthy

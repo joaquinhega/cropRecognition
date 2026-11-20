@@ -1,9 +1,11 @@
-"""Parcel endpoints (subproject C): draw or upload, list, rename and delete."""
+"""Parcel endpoints (subproject C): draw or upload, list, rename, delete, process and read its series and climate."""
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 
 from cultivos.catalog.db import CatalogUnavailable
+from cultivos.jobs import service as jobs
+from cultivos.modules import results
 from cultivos.parcels import service
 from cultivos.parcels.geometry import ParcelError
 from cultivos.parcels.store import ParcelNotFound
@@ -74,3 +76,27 @@ def rename_parcel(parcel_id: int, changes: ParcelChanges) -> dict:
 def delete_parcel(parcel_id: int) -> Response:
     _run(service.delete, parcel_id)
     return Response(status_code=204)
+
+
+@router.post("/{parcel_id}/process", status_code=202)
+def process_parcel(parcel_id: int) -> dict:
+    """Queue the series of indices and the climate of the parcel. The work runs in the worker; follow it at /jobs/{id}."""
+    return _run(jobs.process_parcel, parcel_id)
+
+
+@router.get("/{parcel_id}/jobs")
+def parcel_jobs(parcel_id: int) -> dict:
+    """Latest processing jobs of the parcel, newest first."""
+    return _run(jobs.parcel_jobs, parcel_id)
+
+
+@router.get("/{parcel_id}/series")
+def parcel_series(parcel_id: int) -> dict:
+    """Monthly NDVI, NDRE, NDMI and EVI by campaign, with the scene each month came from."""
+    return _run(results.series, parcel_id)
+
+
+@router.get("/{parcel_id}/climate")
+def parcel_climate(parcel_id: int) -> dict:
+    """Monthly temperature and rain by campaign (NASA POWER at the center of the parcel)."""
+    return _run(results.climate, parcel_id)

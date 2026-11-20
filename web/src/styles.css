@@ -374,6 +374,28 @@ code {
   color: var(--warning);
 }
 
+.progress {
+  height: 6px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--grid);
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s;
+}
+
+.links {
+  display: flex;
+  gap: 14px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
 .upload-result ul {
   margin: 4px 0 0;
   padding-left: 16px;

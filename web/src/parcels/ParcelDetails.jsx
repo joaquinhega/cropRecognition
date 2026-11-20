@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatDate, formatNumber } from "../format.js";
+import ProcessingStatus from "./ProcessingStatus.jsx";
 
 function originText(properties) {
   return properties.origin === "file" ? `subida desde ${properties.source_file}` : "dibujada en el mapa";
@@ -37,7 +38,10 @@ export default function ParcelDetails({ parcel, limits, saving, onRename, onDele
         onKeyDown={(event) => event.key === "Enter" && event.target.blur()}
       />
 
-      <div className="buttons spaced">
+      <ProcessingStatus parcelId={parcel.id} />
+
+      <h3>Borrar</h3>
+      <div className="buttons">
         {!confirming && (
           <button onClick={() => setConfirming(true)} disabled={saving}>
             Borrar parcela
