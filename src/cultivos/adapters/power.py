@@ -115,7 +115,10 @@ class PowerAdapter(Adapter):
 
     def climate(self, bbox: list[float], start: date, end: date) -> dict:
         """Daily series and its catalog item for the center of a bbox."""
-        lon, lat = bbox_center(bbox)
+        return self.climate_at(*bbox_center(bbox), start, end)
+
+    def climate_at(self, lon: float, lat: float, start: date, end: date) -> dict:
+        """Daily and monthly series and its catalog item for one point."""
         rows = self.parse_series(self.fetch(lon, lat, start, end))
         return {
             "item": self.build_item(lon, lat, start, end, rows),
@@ -143,7 +146,8 @@ def monthly(rows: list[dict], parameters: dict) -> list[dict]:
         months.setdefault(row["date"][:7], []).append(row)
     result = []
     for month, days in sorted(months.items()):
-        entry = {"month": month, "days": len(days)}
+        valid = [day for day in days if any(day.get(name) is not None for name in parameters)]
+        entry = {"month": month, "days": len(days), "valid_days": len(valid)}
         for name, meta in parameters.items():
             values = [day[name] for day in days if day.get(name) is not None]
             if not values:
