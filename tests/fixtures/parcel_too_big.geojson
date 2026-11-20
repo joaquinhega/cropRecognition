@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Zona entera"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.92,
+              -33.16
+            ],
+            [
+              -68.877087,
+              -33.16
+            ],
+            [
+              -68.877087,
+              -33.132949
+            ],
+            [
+              -68.92,
+              -33.132949
+            ],
+            [
+              -68.92,
+              -33.16
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

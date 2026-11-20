@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lote cruzado"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.895,
+              -33.14
+            ],
+            [
+              -68.89,
+              -33.135
+            ],
+            [
+              -68.89,
+              -33.14
+            ],
+            [
+              -68.895,
+              -33.135
+            ],
+            [
+              -68.895,
+              -33.14
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
