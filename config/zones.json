@@ -1,0 +1,26 @@
+{
+  "default_zone": "agrelo",
+  "max_search_area_km2": 2500,
+  "zones": {
+    "agrelo": {
+      "name": "Agrelo",
+      "description": "Zona de prueba de vid en Luján de Cuyo",
+      "bbox": [-68.9005, -33.149, -68.8795, -33.131]
+    },
+    "lujan-este": {
+      "name": "Luján de Cuyo, franja este",
+      "description": "Franja de viñedos del este del departamento",
+      "bbox": [-68.95, -33.2, -68.8, -33.0]
+    },
+    "uco-tupungato": {
+      "name": "Valle de Uco, Tupungato",
+      "description": "Zona vitivinícola del Valle de Uco",
+      "bbox": [-69.25, -33.45, -69.1, -33.3]
+    },
+    "este-san-martin": {
+      "name": "Oasis Este, San Martín",
+      "description": "Zona vitivinícola del oasis Este",
+      "bbox": [-68.55, -33.15, -68.4, -33.0]
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "earth-search": {
+    "status": "activa",
+    "name": "Earth Search",
+    "provider": "Element 84 sobre AWS Open Data",
+    "kind": "imagen",
+    "url": "https://earth-search.aws.element84.com/v1",
+    "requires_account": false,
+    "cost": "gratis",
+    "timeout_s": 60,
+    "collections": {
+      "sentinel-2-l2a": {
+        "catalog_id": "earth-search-sentinel-2-l2a",
+        "title": "Sentinel-2 L2A",
+        "description": "Imágenes ópticas de Sentinel-2 con corrección atmosférica (nivel 2A), vía Earth Search.",
+        "resolution_m": 10,
+        "revisit_days": 5,
+        "cloud_property": "eo:cloud_cover",
+        "license": "other",
+        "license_title": "Copernicus Sentinel Data Terms (uso libre, citar la fuente)",
+        "license_url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+        "attribution": "Contiene datos modificados de Copernicus Sentinel {year}",
+        "limits": "Las nubes y sus sombras tapan la superficie; usar la capa de nubes o filtrar por porcentaje. A 10 m, lotes de menos de 1 ha tienen pocos píxeles limpios."
+      }
+    }
+  },
+  "conae-saocom": {
+    "status": "activa",
+    "name": "CONAE · Catálogo SAOCOM",
+    "provider": "Comisión Nacional de Actividades Espaciales (CONAE)",
+    "kind": "radar",
+    "url": "https://catalog.saocom.conae.gov.ar",
+    "search_path": "/api/catalog/",
+    "requires_account": false,
+    "cost": "búsqueda gratis; descarga con registro y licencia",
+    "timeout_s": 60,
+    "page_size": 100,
+    "note": "Solo búsqueda de metadatos (B4-T4). Usa la API de la web del catálogo, que no está documentada como API pública: sus condiciones de uso están por verificar.",
+    "collections": {
+      "saocom-1": {
+        "catalog_id": "conae-saocom-1",
+        "title": "SAOCOM-1 (radar banda L)",
+        "description": "Productos de radar de apertura sintética de SAOCOM-1A y 1B encontrados en el catálogo de CONAE. Solo metadatos y miniatura.",
+        "resolution_label": "10 a 100 m según el modo",
+        "license": "other",
+        "license_title": "Búsqueda libre; descarga con licencia de CONAE",
+        "license_url": "https://www.argentina.gob.ar/ciencia/conae/catalogo-de-imagenes",
+        "attribution": "Producto SAOCOM® - ©CONAE {year}",
+        "limits": "Solo se guardan metadatos y una miniatura; para ver o procesar la imagen hay que pedirla a CONAE con registro y licencia."
+      }
+    }
+  },
+  "nasa-power": {
+    "status": "activa",
+    "name": "NASA POWER",
+    "provider": "NASA Langley Research Center",
+    "kind": "clima",
+    "url": "https://power.larc.nasa.gov/api/temporal",
+    "requires_account": false,
+    "cost": "gratis",
+    "timeout_s": 60,
+    "community": "AG",
+    "fill_value": -999,
+    "parameters": {
+      "T2M": {
+        "title": "Temperatura media",
+        "unit": "°C",
+        "monthly": "mean"
+      },
+      "T2M_MAX": {
+        "title": "Temperatura máxima",
+        "unit": "°C",
+        "monthly": "mean"
+      },
+      "T2M_MIN": {
+        "title": "Temperatura mínima",
+        "unit": "°C",
+        "monthly": "mean"
+      },
+      "PRECTOTCORR": {
+        "title": "Precipitación",
+        "unit": "mm/día",
+        "monthly": "sum",
+        "monthly_unit": "mm/mes"
+      }
+    },
+    "collections": {
+      "daily-point": {
+        "catalog_id": "nasa-power-daily",
+        "title": "NASA POWER diario (punto)",
+        "description": "Series diarias de temperatura y precipitación de NASA POWER para el centro de una zona.",
+        "resolution_label": "0,5° × 0,625° (~50 km)",
+        "license": "other",
+        "license_title": "Datos abiertos de NASA (uso libre, citar la fuente)",
+        "license_url": "https://power.larc.nasa.gov/docs/referencing/",
+        "attribution": "Datos de NASA Langley Research Center (LaRC) POWER Project, financiado por NASA Earth Science/Applied Science Program",
+        "limits": "Una celda de ~50 km calculada por un modelo: describe el clima de la zona, no el de un lote. La lluvia puede diferir mucho de la de una estación (en octubre de 2026 marcó más del doble que las estaciones de Mendoza). Los últimos días pueden faltar o cambiar."
+      }
+    }
+  },
+  "nasa-hls": {
+    "status": "postergada",
+    "name": "NASA HLS",
+    "provider": "NASA LP DAAC",
+    "kind": "imagen",
+    "requires_account": true,
+    "cost": "gratis con cuenta Earthdata",
+    "resolution_label": "30 m",
+    "license_title": "Datos abiertos de NASA",
+    "note": "Postergada: requiere cuenta de Earthdata (B4-T1)."
+  },
+  "copernicus-dataspace": {
+    "status": "postergada",
+    "name": "Copernicus Data Space",
+    "provider": "Comisión Europea / ESA",
+    "kind": "imagen",
+    "requires_account": true,
+    "cost": "gratis con cuenta, con cuotas",
+    "resolution_label": "10 m (Sentinel-2), radar (Sentinel-1)",
+    "license_title": "Copernicus Sentinel Data Terms",
+    "note": "Postergada: requiere cuenta de Copernicus Data Space (B4-T3)."
+  }
+}
