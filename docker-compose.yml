@@ -1,4 +1,73 @@
+x-postgres-env: &postgres-env
+  PGUSER: ${POSTGRES_USER:-cultivos}
+  PGPASSWORD: ${POSTGRES_PASSWORD:-cultivos_dev}
+  PGDATABASE: ${POSTGRES_DB:-pgstac}
+  PGHOST: database
+  PGPORT: "5432"
+
 services:
+  database:
+    image: ghcr.io/stac-utils/pgstac:v${PGSTAC_VERSION:-0.9.11}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5439}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cultivos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cultivos_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-pgstac}
+      PGUSER: ${POSTGRES_USER:-cultivos}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-cultivos_dev}
+      PGDATABASE: ${POSTGRES_DB:-pgstac}
+    command: postgres -N 500
+    volumes:
+      - pgstac-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cultivos} -d ${POSTGRES_DB:-pgstac}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  stac:
+    image: ghcr.io/stac-utils/stac-fastapi-pgstac:${STAC_FASTAPI_VERSION:-7.1.0}
+    ports:
+      - "127.0.0.1:${STAC_PORT:-8081}:8081"
+    environment:
+      <<: *postgres-env
+      ENABLE_TRANSACTIONS_EXTENSIONS: "TRUE"
+    command: uvicorn stac_fastapi.pgstac.app:create_app --factory --host 0.0.0.0 --port 8081
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/_mgmt/ping')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      database:
+        condition: service_healthy
+
+  raster:
+    image: ghcr.io/stac-utils/titiler-pgstac:${TITILER_PGSTAC_VERSION:-3.2.0}
+    platform: linux/amd64
+    ports:
+      - "127.0.0.1:${RASTER_PORT:-8082}:8082"
+    environment:
+      <<: *postgres-env
+      GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
+      GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: "YES"
+      GDAL_HTTP_MULTIPLEX: "YES"
+      CPL_VSIL_CURL_ALLOWED_EXTENSIONS: .tif,.TIF,.tiff
+      VSI_CACHE: "TRUE"
+      VSI_CACHE_SIZE: "50000000"
+    command: uvicorn titiler.pgstac.main:app --host 0.0.0.0 --port 8082
+    volumes:
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      database:
+        condition: service_healthy
+
   api:
     build:
       context: .
@@ -6,16 +75,22 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
+      <<: *postgres-env
       WATCHFILES_FORCE_POLLING: "true"
+      RASTER_PUBLIC_URL: /raster
     volumes:
       - ./src:/app/src
       - ./config:/app/config
       - ./data:/app/data
+      - ./tests:/app/tests
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 3s
       retries: 5
+    depends_on:
+      database:
+        condition: service_healthy
 
   web:
     build:
@@ -25,9 +100,15 @@ services:
       - "${WEB_PORT:-5173}:5173"
     environment:
       API_URL: http://api:8000
+      RASTER_URL: http://raster:8082
     volumes:
       - ./web:/app
       - /app/node_modules
     depends_on:
       api:
         condition: service_healthy
+      raster:
+        condition: service_healthy
+
+volumes:
+  pgstac-data:

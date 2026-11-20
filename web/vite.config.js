@@ -12,6 +12,10 @@ export default defineConfig({
         target: process.env.API_URL,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
+      "/raster": {
+        target: process.env.RASTER_URL,
+        rewrite: (path) => path.replace(/^\/raster/, ""),
+      },
     },
   },
 });

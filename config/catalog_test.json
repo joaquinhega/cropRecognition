@@ -1,0 +1,15 @@
+{
+  "stac_url": "http://stac:8081",
+  "raster_url": "http://localhost:8082",
+  "collection_id": "test-ndvi",
+  "item_id": "ndvi-2026-01-19",
+  "datetime": "2026-01-19T00:00:00Z",
+  "source_path": "data/processed/2026-01-19_MGRS-19HED_ndvi.tif",
+  "cog_path": "data/test/2026-01-19_ndvi_cog.tif",
+  "container_root": "/app",
+  "render": {
+    "assets": "ndvi",
+    "rescale": "-0.2,0.9",
+    "colormap_name": "rdylgn"
+  }
+}
