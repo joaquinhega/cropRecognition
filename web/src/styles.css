@@ -334,6 +334,51 @@ code {
   text-align: center;
 }
 
+.buttons button.danger {
+  border-color: var(--warning);
+  color: var(--warning);
+  text-align: center;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.parcel-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.buttons button.parcel-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.parcel-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.parcel-area {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.badge.small-parcel {
+  margin-left: 0;
+  background: rgba(255, 138, 101, 0.15);
+  color: var(--warning);
+}
+
+.upload-result ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+
 .buttons.spaced {
   margin-top: 10px;
 }

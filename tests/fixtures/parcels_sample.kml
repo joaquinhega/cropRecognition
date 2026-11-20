@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Parcelas de ejemplo</name>
+    <Placemark>
+      <name>Cuadro 1</name>
+      <Polygon>
+        <outerBoundaryIs><LinearRing><coordinates>-68.896,-33.145,0 -68.892782,-33.145,0 -68.892782,-33.142746,0 -68.896,-33.142746,0 -68.896,-33.145,0</coordinates></LinearRing></outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark>
+      <name>Cuadro 2 con galpón</name>
+      <Polygon>
+        <outerBoundaryIs><LinearRing><coordinates>-68.888,-33.147,0 -68.884782,-33.147,0 -68.884782,-33.144295,0 -68.888,-33.144295,0 -68.888,-33.147,0</coordinates></LinearRing></outerBoundaryIs>
+        <innerBoundaryIs><LinearRing><coordinates>-68.8869,-33.146,0 -68.8869,-33.145098,0 -68.885827,-33.145098,0 -68.885827,-33.146,0 -68.8869,-33.146,0</coordinates></LinearRing></innerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

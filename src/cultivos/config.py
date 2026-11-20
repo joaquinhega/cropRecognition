@@ -11,6 +11,7 @@ SOURCES_CONFIG_PATH = Path("config/sources.json")
 ZONES_CONFIG_PATH = Path("config/zones.json")
 CATALOG_CONFIG_PATH = Path("config/catalog.json")
 LAYERS_CONFIG_PATH = Path("config/layers.json")
+PARCELS_CONFIG_PATH = Path("config/parcels.json")
 
 
 def _load(path: Path) -> dict:
@@ -55,3 +56,7 @@ def load_catalog_config() -> dict:
 
 def load_layers_config() -> dict:
     return _load(LAYERS_CONFIG_PATH)
+
+
+def load_parcels_config() -> dict:
+    return _load(PARCELS_CONFIG_PATH)

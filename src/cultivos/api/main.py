@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 
+from cultivos.api.parcels import router as parcels_router
 from cultivos.api.platform import router as platform_router
 from cultivos.catalog import items as catalog_items
 from cultivos.catalog.db import CatalogUnavailable
@@ -25,6 +26,7 @@ from cultivos.split import SplitError, SplitExists, create_split, read_split
 
 app = FastAPI(title="cropRecognition API")
 app.include_router(platform_router)
+app.include_router(parcels_router)
 
 
 class NewLabel(BaseModel):

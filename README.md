@@ -5,18 +5,19 @@ Plataforma intermediaria de datos satelitales para el agro: se conecta a fuentes
 ## Estado
 
 - **A · Reconocedor de vid (Agrelo):** cerrado. Etiquetas, series de NDVI y tablas de entrenamiento.
-- **B · Datos y fuentes:** en curso. Catálogo propio (eoAPI), adaptadores de Earth Search (Sentinel-2), NASA POWER (clima) y CONAE (SAOCOM, solo búsqueda), visor nuevo.
-- **C a F:** parcelas, reconocimiento, API pública e interfaz final, fuentes pagas.
+- **B · Datos y fuentes:** cerrado. Catálogo propio (eoAPI), adaptadores de Earth Search (Sentinel-2), NASA POWER (clima) y CONAE (SAOCOM, solo búsqueda), visor con modos Explorar y Etiquetar.
+- **C · Parcelas:** en curso. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela.
+- **D a F:** reconocimiento, API pública e interfaz final, fuentes pagas.
 
 ## Servicios
 
 | Servicio | Qué hace | Dirección local |
 |---|---|---|
 | `web` | Visor (React + Vite + Leaflet) | http://localhost:5173 |
-| `api` | Nuestra API (FastAPI): zonas, fuentes, búsqueda, catálogo, clima, etiquetas | http://localhost:8000/docs |
+| `api` | Nuestra API (FastAPI): zonas, fuentes, búsqueda, catálogo, clima, parcelas, etiquetas | http://localhost:8000/docs |
 | `stac` | Catálogo STAC propio (STAC-FastAPI) | http://localhost:8081 |
 | `raster` | Teselas de las imágenes del catálogo (TiTiler) | http://localhost:8082/api.html |
-| `database` | Postgres con pgSTAC y PostGIS | `localhost:5439` |
+| `database` | Postgres con pgSTAC (catálogo) y PostGIS (parcelas, esquema `platform`) | `localhost:5439` |
 
 El visor llama a la API en `/api` y a TiTiler en `/raster` (Vite hace de intermediario).
 
@@ -46,6 +47,20 @@ curl "http://localhost:8000/climate?zone=agrelo&start=2026-01-01&end=2026-03-31"
 
 También se puede buscar desde el visor: panel **Zona y búsqueda** → **Buscar en las fuentes y guardar**.
 
+### Parcelas (C1)
+
+En el visor, modo **Mi parcela**: dibujar una parcela o subir un GeoJSON, KML o KMZ (cada polígono del archivo es una parcela). Por la API:
+
+```powershell
+# Listar (GeoJSON) con los límites de tamaño
+curl "http://localhost:8000/parcels"
+
+# Subir un archivo: el cuerpo de la petición es el archivo
+curl.exe -X POST "http://localhost:8000/parcels/import?filename=parcels_sample.kml" --data-binary "@tests/fixtures/parcels_sample.kml"
+```
+
+La tabla `platform.parcels` se crea sola la primera vez que se usa. Superficie geodésica en hectáreas; máximo y mínimo en `config/parcels.json`.
+
 ### Prueba rápida del catálogo (B1)
 
 ```powershell
@@ -60,7 +75,7 @@ Carga un NDVI de prueba por la API STAC y muestra el enlace del visor de TiTiler
 docker compose run --rm api pytest -q
 ```
 
-Los tests de adaptadores usan respuestas grabadas de las fuentes; los del catálogo usan la base de `docker compose` y borran lo que crean.
+Los tests de adaptadores usan respuestas grabadas de las fuentes; los del catálogo y de parcelas usan la base de `docker compose` y borran lo que crean.
 
 ## Configuración
 
@@ -70,6 +85,7 @@ Todo lo ajustable está en `config/`:
 - `zones.json`: zonas con nombre y superficie máxima de búsqueda.
 - `layers.json`: capas de cada colección (bandas, fórmula, colores) y cómo leerlas.
 - `catalog.json`: valores por defecto de búsqueda y de los recortes de A.
+- `parcels.json`: superficie máxima y mínima de una parcela, formatos y tamaño de archivo admitidos.
 - `zone.json`, `imagery.json`, `labels.json`, `split.json`, `series.json`, `inventory.json`: subproyecto A y B0.
 
 Puertos y credenciales de la base, en `.env` (ver `.env.example`).
@@ -80,11 +96,13 @@ Puertos y credenciales de la base, en `.env` (ver `.env.example`).
 src/cultivos/
 ├── adapters/      # una fuente por archivo, mismo contrato (base.py)
 ├── catalog/       # pgSTAC: conexión, ingesta, consultas, carga de recortes
-├── api/           # main.py (etiquetas, A) y platform.py (B)
+├── parcels/       # parcelas en PostGIS: validación, lectura de archivos, tabla
+├── api/           # main.py (etiquetas, A), platform.py (B) y parcels.py (C)
 ├── zones.py       # zonas y recuadros
 └── ...            # scripts del subproyecto A (recorte, NDVI, etiquetas, series)
 web/src/
 ├── explore/       # modo Explorar: capas, búsqueda, línea de tiempo, clima
+├── parcels/       # modo Mi parcela: dibujar, subir, listar, renombrar, borrar
 ├── label/         # modo Etiquetar (herramienta de A)
 └── map/           # mapas base y utilidades de Leaflet
 tests/             # pytest

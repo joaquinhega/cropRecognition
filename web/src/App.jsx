@@ -3,10 +3,12 @@ import "leaflet/dist/leaflet.css";
 import { getJson } from "./api.js";
 import ExploreMode from "./explore/ExploreMode.jsx";
 import LabelingMode from "./label/LabelingMode.jsx";
+import ParcelsMode from "./parcels/ParcelsMode.jsx";
 import SourcesDrawer from "./SourcesDrawer.jsx";
 
 const MODES = [
   { id: "explore", label: "Explorar" },
+  { id: "parcels", label: "Mi parcela" },
   { id: "label", label: "Etiquetar" },
 ];
 
@@ -78,6 +80,9 @@ export default function App() {
             infoTarget={infoTarget}
             onLayerCount={setLayerCount}
           />
+        )}
+        {ready && mode === "parcels" && (
+          <ParcelsMode zones={zones} infoTarget={infoTarget} onLayerCount={setLayerCount} />
         )}
         {ready && mode === "label" && <LabelingMode infoTarget={infoTarget} onLayerCount={setLayerCount} />}
       </main>
