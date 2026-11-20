@@ -64,16 +64,16 @@ export default function SeriesChart({ summary, onClose }) {
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%">
         {grid.map((value) => (
           <g key={value}>
-            <line x1={MARGIN.left} x2={WIDTH - MARGIN.right} y1={y(value)} y2={y(value)} stroke="#e5e5e5" />
-            <text x={MARGIN.left - 6} y={y(value) + 4} textAnchor="end" fontSize="11" fill="#555">
+            <line x1={MARGIN.left} x2={WIDTH - MARGIN.right} y1={y(value)} y2={y(value)} style={{ stroke: "var(--grid)" }} />
+            <text x={MARGIN.left - 6} y={y(value) + 4} textAnchor="end" fontSize="11" style={{ fill: "var(--muted)" }}>
               {value.toFixed(1)}
             </text>
           </g>
         ))}
         {monthStarts(first, last).map((tick) => (
           <g key={tick.time}>
-            <line x1={x(tick.time)} x2={x(tick.time)} y1={MARGIN.top} y2={HEIGHT - MARGIN.bottom} stroke="#f0f0f0" />
-            <text x={x(tick.time)} y={HEIGHT - 10} textAnchor="middle" fontSize="11" fill="#555">
+            <line x1={x(tick.time)} x2={x(tick.time)} y1={MARGIN.top} y2={HEIGHT - MARGIN.bottom} style={{ stroke: "var(--grid)" }} />
+            <text x={x(tick.time)} y={HEIGHT - 10} textAnchor="middle" fontSize="11" style={{ fill: "var(--muted)" }}>
               {tick.label}
             </text>
           </g>

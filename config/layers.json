@@ -1,0 +1,136 @@
+{
+  "earth-search-sentinel-2-l2a": {
+    "rgb": {
+      "title": "Color real",
+      "how_to_read": "Como una foto: los viñedos y frutales se ven verdes en verano y marrones en invierno.",
+      "params": {
+        "assets": [
+          "visual"
+        ]
+      }
+    },
+    "false-color": {
+      "title": "Infrarrojo",
+      "how_to_read": "La vegetación sana se ve roja intensa; el suelo desnudo, gris o celeste.",
+      "params": {
+        "assets": [
+          "nir",
+          "red",
+          "green"
+        ],
+        "rescale": [
+          "0,4500",
+          "0,2500",
+          "0,2500"
+        ]
+      }
+    },
+    "ndvi": {
+      "title": "Verdor (NDVI)",
+      "how_to_read": "Verde: mucha vegetación activa. Amarillo: poca. Rojo: suelo, agua o construcciones. Las nubes también se ven rojas.",
+      "legend": {
+        "min": -0.2,
+        "max": 0.9,
+        "colormap": "rdylgn",
+        "low": "Sin vegetación",
+        "high": "Mucha vegetación"
+      },
+      "params": {
+        "assets": [
+          "nir",
+          "red"
+        ],
+        "expression": "(b1-b2)/(b1+b2)",
+        "rescale": [
+          "-0.2,0.9"
+        ],
+        "colormap_name": "rdylgn"
+      }
+    },
+    "clouds": {
+      "title": "Nubes y sombras",
+      "how_to_read": "Blanco: nube. Celeste: nube fina (cirro). Gris oscuro: sombra de nube. Donde no hay color, el píxel está limpio.",
+      "legend": {
+        "categories": [
+          {
+            "label": "Nube",
+            "color": "#f5f5f5"
+          },
+          {
+            "label": "Nube fina",
+            "color": "#7fd3f7"
+          },
+          {
+            "label": "Sombra",
+            "color": "#4a4a4a"
+          }
+        ]
+      },
+      "params": {
+        "assets": [
+          "scl"
+        ],
+        "colormap": {
+          "3": [
+            74,
+            74,
+            74,
+            220
+          ],
+          "8": [
+            245,
+            245,
+            245,
+            220
+          ],
+          "9": [
+            255,
+            255,
+            255,
+            240
+          ],
+          "10": [
+            127,
+            211,
+            247,
+            200
+          ]
+        }
+      }
+    }
+  },
+  "agrelo-clips": {
+    "rgb": {
+      "title": "Color real",
+      "how_to_read": "Recorte en color real de la zona de prueba.",
+      "params": {
+        "assets": [
+          "bands|bidx=3,2,1"
+        ],
+        "rescale": [
+          "0,2500"
+        ]
+      }
+    },
+    "ndvi": {
+      "title": "Verdor (NDVI)",
+      "how_to_read": "Verde: mucha vegetación activa. Rojo: sin vegetación. Transparente: nubes o sombras descartadas.",
+      "legend": {
+        "min": -0.2,
+        "max": 0.9,
+        "colormap": "rdylgn",
+        "low": "Sin vegetación",
+        "high": "Mucha vegetación"
+      },
+      "params": {
+        "assets": [
+          "ndvi"
+        ],
+        "rescale": [
+          "-0.2,0.9"
+        ],
+        "colormap_name": "rdylgn"
+      }
+    }
+  }
+}

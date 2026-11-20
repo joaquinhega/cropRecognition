@@ -1,10 +1,15 @@
 import json
+from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 
-from cultivos.config import load_zone_config
+from cultivos.api.platform import router as platform_router
+from cultivos.catalog import items as catalog_items
+from cultivos.catalog.db import CatalogUnavailable
+from cultivos.clips import list_dates
+from cultivos.config import load_catalog_config, load_zone_config
 from cultivos.labels import (
     LabelError,
     LabelNotFound,
@@ -17,9 +22,9 @@ from cultivos.labels import (
 )
 from cultivos.series_summary import summarize_series
 from cultivos.split import SplitError, SplitExists, create_split, read_split
-from cultivos.viewer import LAYERS, image_bounds, list_dates, render_png
 
 app = FastAPI(title="cropRecognition API")
+app.include_router(platform_router)
 
 
 class NewLabel(BaseModel):
@@ -66,25 +71,27 @@ def boundary() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-@app.get("/imagery")
-def imagery() -> dict:
+@app.get("/labels/imagery")
+def labels_imagery() -> dict:
+    """Dates of the Agrelo clips (A) with their TiTiler layers, for the labeling mode."""
+    collection = load_catalog_config()["local_clips"]["collection_id"]
+    bbox = load_zone_config()["work_area"]["bbox"]
     dates = list_dates()
-    bounds = image_bounds(dates[0]["date"]) if dates else None
-    return {"bounds": bounds, "dates": dates}
-
-
-@app.get("/imagery/{date}/{layer}.png")
-def imagery_image(date: str, layer: str) -> Response:
-    if layer not in LAYERS:
-        raise HTTPException(status_code=404, detail=f"Capa desconocida: {layer}")
+    if not dates:
+        return {"bbox": bbox, "layers": [], "dates": [], "missing": []}
+    first, last = date.fromisoformat(dates[0]["date"]), date.fromisoformat(dates[-1]["date"])
     try:
-        png = render_png(date, layer)
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No hay datos para {date}. Ejecutá clip_scene y compute_ndvi para esa fecha.",
-        )
-    return Response(content=png, media_type="image/png")
+        found = catalog_items.find(bbox, first, last, [collection])
+    except CatalogUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    by_date = {item["date"]: item for item in found}
+    missing = [entry["date"] for entry in dates if entry["date"] not in by_date]
+    return {
+        "bbox": bbox,
+        "layers": catalog_items.collection_layers(collection),
+        "dates": [by_date[entry["date"]] for entry in dates if entry["date"] in by_date],
+        "missing": missing,
+    }
 
 
 @app.get("/labels/options")

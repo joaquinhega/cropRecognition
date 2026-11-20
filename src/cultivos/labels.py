@@ -6,7 +6,7 @@ from pathlib import Path
 from rasterio.warp import transform
 
 from cultivos.config import load_imagery_config, load_labels_config, load_zone_config
-from cultivos.viewer import list_dates
+from cultivos.clips import list_dates
 
 FROZEN_STATE = "congelada"
 DRAFT_STATE = "borrador"

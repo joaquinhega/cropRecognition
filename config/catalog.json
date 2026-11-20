@@ -1,0 +1,17 @@
+{
+  "search_defaults": {
+    "days": 90,
+    "max_cloud_cover": 60,
+    "limit": 200
+  },
+  "catalog_query_limit": 500,
+  "local_clips": {
+    "collection_id": "agrelo-clips",
+    "title": "Recortes de Agrelo (subproyecto A)",
+    "description": "Recortes de Sentinel-2 L2A y NDVI con máscara de nubes de la zona de prueba de Agrelo, generados en el subproyecto A.",
+    "cog_dir": "data/cog/agrelo",
+    "container_root": "/app",
+    "resolution_m": 10,
+    "attribution": "Contiene datos modificados de Copernicus Sentinel {year}"
+  }
+}
