@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getJson, sendJson } from "../api.js";
 import { formatDateTime, formatNumber } from "../format.js";
 
@@ -32,11 +32,20 @@ function Progress({ job }) {
   );
 }
 
-export default function ProcessingStatus({ parcelId }) {
+export default function ProcessingStatus({ parcelId, onDone }) {
   const [job, setJob] = useState(undefined);
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
+  const wasActive = useRef(false);
   const active = job && ACTIVE.includes(job.status);
+
+  useEffect(() => {
+    if (active) wasActive.current = true;
+    else if (wasActive.current && job?.status === "done") {
+      wasActive.current = false;
+      onDone();
+    }
+  }, [job]);
 
   useEffect(() => {
     getJson(`/parcels/${parcelId}/jobs`)

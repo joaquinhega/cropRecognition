@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, Polygon, ZoomControl, useMap } from "react-leaflet";
+import { MapContainer, Polygon, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import { deleteResource, getJson, sendFile, sendJson } from "../api.js";
 import { bboxToBounds, formatNumber, plural } from "../format.js";
@@ -9,11 +9,22 @@ import { CursorPosition } from "../map/MapHelpers.jsx";
 import ParcelDetails from "./ParcelDetails.jsx";
 import ParcelList from "./ParcelList.jsx";
 import UploadResult from "./UploadResult.jsx";
+import MonthTimeline from "./sheet/MonthTimeline.jsx";
+import ParcelSheet from "./sheet/ParcelSheet.jsx";
+import { defaultMonth, flattenMonths, useParcelSheet } from "./sheet/sheet.js";
 
 const PARCEL_COLOR = "#4cc38a";
 const SMALL_PARCEL_COLOR = "#ff8a65";
 const SELECTED_COLOR = "#f2b544";
 const PENDING_STYLE = { color: "#ffffff", weight: 2, dashArray: "6 6", fillOpacity: 0.1 };
+const MASK_STYLE = { stroke: false, fillColor: "#0d1117", fillOpacity: 0.72 };
+const WORLD_RING = [
+  [-89, -179.9],
+  [-89, 179.9],
+  [89, 179.9],
+  [89, -179.9],
+];
+const DEFAULT_IMAGE_LAYER = "rgb";
 
 const toPositions = (geometry) => geometry.coordinates.map((ring) => ring.map(([lng, lat]) => [lat, lng]));
 
@@ -33,6 +44,16 @@ function FocusParcels({ parcels, focus }) {
   return null;
 }
 
+/** Image of the chosen month over the parcel; the rest of the map is dimmed so the image reads as cut to the parcel. */
+function ParcelImage({ parcel, url, attribution }) {
+  return (
+    <>
+      <TileLayer key={url} url={url} maxZoom={MAX_ZOOM} zIndex={10} attribution={attribution} />
+      <Polygon positions={[WORLD_RING, ...toPositions(parcel.geometry)]} pathOptions={MASK_STYLE} interactive={false} />
+    </>
+  );
+}
+
 export default function ParcelsMode({ zones, infoTarget, onLayerCount }) {
   const defaultZone = zones.zones.find((zone) => zone.id === zones.default_zone);
   const fileInput = useRef(null);
@@ -45,10 +66,27 @@ export default function ParcelsMode({ zones, infoTarget, onLayerCount }) {
   const [uploadResult, setUploadResult] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [focus, setFocus] = useState({ ids: [], key: 0 });
+  const [sheetVersion, setSheetVersion] = useState(0);
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [imageLayer, setImageLayer] = useState(DEFAULT_IMAGE_LAYER);
+  const [playing, setPlaying] = useState(false);
 
   const parcels = collection?.features ?? [];
   const limits = collection?.limits;
   const selected = parcels.find((parcel) => parcel.id === selectedId);
+  const sheet = useParcelSheet(selectedId, sheetVersion);
+  const sheetMonths = selectedId && sheet.series ? flattenMonths(sheet.series) : [];
+  const showSheet = selected && !drawing && !pending;
+  const imageMonth = sheetMonths.find((month) => month.month === selectedMonth);
+  const imageUrl = showSheet ? imageMonth?.scene?.layers[imageLayer] : null;
+
+  useEffect(() => {
+    setPlaying(false);
+    setSelectedMonth(sheet.series ? defaultMonth(sheet.series) : null);
+  }, [sheet.series]);
+
+  useEffect(() => onLayerCount(imageUrl ? 1 : 0), [imageUrl]);
 
   const focusOn = (ids) => setFocus((current) => ({ ids, key: current.key + 1 }));
 
@@ -203,15 +241,32 @@ export default function ParcelsMode({ zones, infoTarget, onLayerCount }) {
             saving={saving}
             onRename={rename}
             onDelete={remove}
+            onProcessed={() => setSheetVersion((version) => version + 1)}
           />
         )}
       </section>
+
+      {showSheet && (
+        <ParcelSheet
+          sheet={sheet}
+          selectedMonth={selectedMonth}
+          onSelectMonth={setSelectedMonth}
+          imageLayer={imageLayer}
+          onImageLayer={setImageLayer}
+          collapsed={sheetCollapsed}
+          onCollapse={() => setSheetCollapsed((current) => !current)}
+        />
+      )}
+      {showSheet && sheetMonths.length > 0 && (
+        <MonthTimeline months={sheetMonths} selected={selectedMonth} onSelect={setSelectedMonth} playing={playing} onPlaying={setPlaying} />
+      )}
 
       <MapContainer className="map" bounds={bboxToBounds(defaultZone.bbox)} maxZoom={MAX_ZOOM} zoomControl={false}>
         <BaseLayers defaultId="satellite" />
         <ZoomControl position="bottomright" />
         <CursorPosition target={infoTarget} />
         <FocusParcels parcels={parcels} focus={focus} />
+        {imageUrl && <ParcelImage parcel={selected} url={imageUrl} attribution={sheet.series.source.attribution} />}
         {parcels.map((parcel) => {
           const isSelected = parcel.id === selectedId;
           const color = isSelected
@@ -224,7 +279,7 @@ export default function ParcelsMode({ zones, infoTarget, onLayerCount }) {
               key={`${parcel.id}-${drawing}`}
               positions={toPositions(parcel.geometry)}
               interactive={!drawing}
-              pathOptions={{ color, weight: isSelected ? 3 : 2, fillColor: color, fillOpacity: isSelected ? 0.3 : 0.15 }}
+              pathOptions={{ color, weight: isSelected ? 3 : 2, fillColor: color, fillOpacity: isSelected ? (imageUrl ? 0 : 0.3) : 0.15 }}
               eventHandlers={{ click: () => setSelectedId(parcel.id) }}
             />
           );

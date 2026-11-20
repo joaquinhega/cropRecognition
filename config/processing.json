@@ -64,6 +64,12 @@
     "no_pixels": "La parcela es tan chica que no contiene el centro de ningún píxel",
     "error": "No se pudo leer la imagen; se reintenta al volver a procesar"
   },
+  "comparison": {
+    "similar_percent": 5,
+    "similar_absolute": 0.02,
+    "min_baseline_for_percent": 0.1,
+    "decimals": 4
+  },
   "climate": {
     "source": "nasa-power"
   },

@@ -6,7 +6,7 @@ function originText(properties) {
   return properties.origin === "file" ? `subida desde ${properties.source_file}` : "dibujada en el mapa";
 }
 
-export default function ParcelDetails({ parcel, limits, saving, onRename, onDelete }) {
+export default function ParcelDetails({ parcel, limits, saving, onRename, onDelete, onProcessed }) {
   const { properties } = parcel;
   const [name, setName] = useState(properties.name);
   const [confirming, setConfirming] = useState(false);
@@ -38,7 +38,7 @@ export default function ParcelDetails({ parcel, limits, saving, onRename, onDele
         onKeyDown={(event) => event.key === "Enter" && event.target.blur()}
       />
 
-      <ProcessingStatus parcelId={parcel.id} />
+      <ProcessingStatus parcelId={parcel.id} onDone={onProcessed} />
 
       <h3>Borrar</h3>
       <div className="buttons">

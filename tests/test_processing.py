@@ -165,6 +165,10 @@ def test_processing_builds_series_and_climate_and_reuses_closed_months(sources, 
     assert months["2026-10"]["status"] == "no_scene"
     assert months["2026-10"]["complete"] is False
     assert "Copernicus Sentinel 2026" in series["source"]["attribution"]
+    assert "/items/" + f"{TEST_PREFIX}AUG-CLEAR/tiles/" in months["2026-08"]["scene"]["layers"]["rgb"]
+    assert {layer["id"] for layer in series["layers"]} >= {"rgb", "ndvi"}
+    latest = series["comparison"]["NDVI"]
+    assert (latest["campaign"], latest["month"], latest["earlier"], latest["trend"]) == ("2026/27", "2026-08", [], None)
 
     climate = client.get(f"/parcels/{parcel}/climate").json()
     current = climate["campaigns"][-1]

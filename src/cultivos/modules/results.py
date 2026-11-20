@@ -2,8 +2,10 @@
 
 from cultivos.adapters.base import attribution_text, source_info
 from cultivos.catalog import db
-from cultivos.config import load_parcels_config, load_processing_config, load_sources_config
+from cultivos.catalog.items import collection_layers, layer_url
+from cultivos.config import load_layers_config, load_parcels_config, load_processing_config, load_sources_config
 from cultivos.modules import store
+from cultivos.modules.comparison import compare_all
 from cultivos.parcels import store as parcels_store
 
 
@@ -39,6 +41,14 @@ def _by_campaign(entries: list[dict]) -> list[dict]:
     return [{"campaign": label, "months": months} for label, months in campaigns.items()]
 
 
+def _scene_layers(collection: str, item_id: str) -> dict:
+    """TiTiler tile URLs of the scene, one per layer of its collection (same layers as Explorar)."""
+    return {
+        layer_id: layer_url(collection, item_id, layer["params"])
+        for layer_id, layer in load_layers_config().get(collection, {}).items()
+    }
+
+
 def _index_entry(row: dict, status_texts: dict) -> dict:
     scene = None
     if row["scene_id"]:
@@ -47,6 +57,7 @@ def _index_entry(row: dict, status_texts: dict) -> dict:
             "collection": row["scene_collection"],
             "date": row["scene_datetime"].date().isoformat(),
             "cloud_cover": row["scene_cloud_cover"],
+            "layers": _scene_layers(row["scene_collection"], row["scene_id"]),
         }
     return {
         "campaign": row["campaign"],
@@ -74,6 +85,7 @@ def series(parcel_id: int) -> dict:
 
     dates = sorted(row["scene_datetime"].date().isoformat() for row in rows if row["scene_datetime"])
     used = {"first": dates[0], "last": dates[-1]} if dates else None
+    campaigns = _by_campaign([_index_entry(row, config["month_status"]) for row in rows])
     return {
         "parcel": parcel,
         "processed_at": max((row["processed_at"] for row in rows), default=None),
@@ -83,9 +95,14 @@ def series(parcel_id: int) -> dict:
             "pixels": "Cuentan los píxeles de 10 m cuyo centro cae dentro de la parcela; las bandas de 20 m se reparten en cuatro píxeles de 10 m.",
             "min_valid_share": imagery["min_valid_share"],
             "statistics": "Promedio de los píxeles limpios y rango entre el percentil 25 y el 75.",
+            "comparison": "El último mes con dato de la campaña en curso contra el promedio de ese mismo mes en las campañas anteriores.",
         },
         "source": _source(imagery["source"], used),
-        "campaigns": _by_campaign([_index_entry(row, config["month_status"]) for row in rows]),
+        "scenes": used,
+        "campaign_first_month": config["campaigns"]["first_month"],
+        "layers": collection_layers(imagery["collection"]),
+        "comparison": compare_all(campaigns, list(config["indices"]), config["comparison"]),
+        "campaigns": campaigns,
     }
 
 

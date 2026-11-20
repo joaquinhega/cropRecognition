@@ -35,14 +35,19 @@ function Categories({ layer }) {
   );
 }
 
+export function LegendEntry({ layer }) {
+  if (!layer.legend) return null;
+  return layer.legend.categories ? <Categories layer={layer} /> : <Gradient layer={layer} />;
+}
+
 export default function Legend({ layers }) {
   const withLegend = layers.filter((layer) => layer.legend);
   if (!withLegend.length) return null;
   return (
     <div className="floating legend">
-      {withLegend.map((layer) =>
-        layer.legend.categories ? <Categories key={layer.id} layer={layer} /> : <Gradient key={layer.id} layer={layer} />,
-      )}
+      {withLegend.map((layer) => (
+        <LegendEntry key={layer.id} layer={layer} />
+      ))}
     </div>
   );
 }

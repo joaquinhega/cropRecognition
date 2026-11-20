@@ -815,3 +815,86 @@ code {
     display: none;
   }
 }
+
+/* C3: parcel sheet */
+
+.parcel-sheet {
+  top: 12px;
+  right: 12px;
+  width: 420px;
+  max-height: calc(100% - 170px);
+  overflow-x: hidden;
+}
+
+.parcel-sheet .legend-entry {
+  margin-top: 6px;
+}
+
+.buttons.segmented {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.buttons.segmented button {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.sheet-chart .grid-line {
+  stroke: var(--grid);
+}
+
+.sheet-chart .selected-month {
+  stroke: #ffffff;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+}
+
+.chart-point {
+  cursor: pointer;
+}
+
+.chart-point.selected {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.chart-title {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.campaign-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--muted);
+}
+
+.month-card {
+  margin: 8px 0 4px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #19202a;
+}
+
+.timeline.parcel-timeline {
+  left: 296px;
+  right: 474px;
+}
+
+.parcel-timeline .timeline-track {
+  margin-bottom: 22px;
+}
+
+.campaign-mark {
+  position: absolute;
+  top: 24px;
+  padding-left: 3px;
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}

@@ -12,6 +12,14 @@ export function formatMonth(month) {
   return new Date(`${month}-15T12:00:00Z`).toLocaleDateString("es-AR", { ...UTC, month: "short", year: "2-digit" });
 }
 
+export function formatMonthLong(month) {
+  return new Date(`${month}-15T12:00:00Z`).toLocaleDateString("es-AR", { ...UTC, month: "long", year: "numeric" });
+}
+
+export function monthName(month) {
+  return new Date(`${month}-15T12:00:00Z`).toLocaleDateString("es-AR", { ...UTC, month: "long" });
+}
+
 export function formatNumber(value, digits = 0) {
   return value.toLocaleString("es-AR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
