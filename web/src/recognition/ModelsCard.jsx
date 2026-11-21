@@ -3,6 +3,7 @@ import { formatMonth, formatNumber } from "../format.js";
 const percent = (share) => `${formatNumber(share * 100, 1)} %`;
 const decimal = (value) => formatNumber(value, 2);
 const metric = (value) => formatNumber(value, 3);
+const signed = (value) => `${value > 0 ? "+" : value < 0 ? "−" : "±"}${formatNumber(Math.abs(value), 3)}`;
 
 function Swatch({ info }) {
   return (
@@ -40,7 +41,7 @@ function RuleNode({ node, classes }) {
   );
 }
 
-function ClassMetrics({ result, classes, target }) {
+function ClassMetrics({ result, classes, target, baseline }) {
   return (
     <table className="training-months model-table">
       <thead>
@@ -49,6 +50,7 @@ function ClassMetrics({ result, classes, target }) {
           <td>Precisión</td>
           <td>Recall</td>
           <td>F1</td>
+          {baseline && <td>vs. línea base</td>}
         </tr>
       </thead>
       <tbody>
@@ -64,10 +66,53 @@ function ClassMetrics({ result, classes, target }) {
               {metrics.meets_target === true && " ✓"}
               {metrics.meets_target === false && ` < ${decimal(target)}`}
             </td>
+            {baseline && <Delta value={metrics.f1 - baseline.per_class[name].f1} />}
           </tr>
         ))}
       </tbody>
     </table>
+  );
+}
+
+function Delta({ value }) {
+  const rounded = Math.round(value * 1000) / 1000;
+  return <td className={rounded > 0 ? "model-hit" : rounded < 0 ? "warning" : "muted"}>{signed(rounded)}</td>;
+}
+
+function Bars({ rows, label }) {
+  const top = Math.max(...rows.map((row) => row.value), 0);
+  return (
+    <table className="training-months model-bars">
+      <tbody>
+        {rows.map((row) => (
+          <tr key={label(row)}>
+            <td>{label(row)}</td>
+            <td className="model-bar-cell">
+              <span className="model-bar" style={{ width: `${top > 0 ? Math.max(0, (row.value / top) * 100) : 0}%` }} />
+            </td>
+            <td>{metric(Math.abs(row.value) < 0.0005 ? 0 : row.value)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function Importance({ importance }) {
+  return (
+    <details className="training-legend" open>
+      <summary>Qué variables pesaron más</summary>
+      <p className="hint">
+        Cuánto baja el F1 promedio en los píxeles de prueba si se mezclan al azar, juntas, todas las variables de un mes o de
+        un tipo. Cuanto más baja, más depende el modelo de ese grupo.
+      </p>
+      <p className="hint">Por mes:</p>
+      <Bars rows={importance.by_month} label={(row) => formatMonth(row.month)} />
+      <p className="hint">
+        Por tipo de variable (valores bajos: si se mezcla un tipo, el modelo se apoya en los otros, que dicen casi lo mismo):
+      </p>
+      <Bars rows={importance.by_kind} label={(row) => importance.kind_titles[row.kind] ?? row.kind} />
+    </details>
   );
 }
 
@@ -141,6 +186,7 @@ function Rounds({ rounds, classes }) {
 export default function ModelsCard({ models, classes }) {
   const { evaluation } = models;
   const targets = evaluation.targets.map((name) => classes[name].title).join(" y ");
+  const baseline = models.results.find((result) => result.model === evaluation.baseline_model);
   return (
     <>
       <p className="hint">
@@ -161,7 +207,12 @@ export default function ModelsCard({ models, classes }) {
             Acierto global {percent(result.accuracy)} · F1 promedio {decimal(result.macro_f1)} · {result.evaluation.blocks}{" "}
             bloques · {result.columns} variables
           </p>
-          <ClassMetrics result={result} classes={classes} target={result.evaluation.target_f1} />
+          <ClassMetrics
+            result={result}
+            classes={classes}
+            target={result.evaluation.target_f1}
+            baseline={baseline && result !== baseline ? baseline : null}
+          />
           <p className="hint">Con qué se confunde cada clase (en diagonal, los aciertos):</p>
           <Confusion confusion={result.confusion} classes={classes} />
           {result.rule && (
@@ -172,6 +223,7 @@ export default function ModelsCard({ models, classes }) {
               </div>
             </details>
           )}
+          {result.importance && <Importance importance={result.importance} />}
           <Rounds rounds={result.rounds} classes={classes} />
         </div>
       ))}

@@ -109,9 +109,10 @@ A partir de la tabla de D1-T1 arma `features.csv` con una fila por píxel: las b
 
 ```powershell
 docker compose run --rm api python -m cultivos.models.evaluate baseline
+docker compose run --rm api python -m cultivos.models.evaluate random_forest
 ```
 
-Entrena y mide un modelo con validación cruzada por bloques: la zona se corta en cuadrados que se turnan como prueba, y en cada ronda se dejan fuera del entrenamiento los píxeles cercanos a los de prueba. `baseline` es la línea base, un árbol de dos preguntas sobre el NDVI de cada mes. Escribe en `data/training/<dataset>/models/` el informe (`baseline.json`), la ronda de cada píxel (`folds.csv`) y lo que predijo para cada píxel cuando estaba en prueba (`baseline-predictions.csv`). Tamaño de los bloques, rondas, franja y meta de F1 en `config/training.json` (`evaluation`); los modelos, en `models`. El resultado se ve en **Reconocimiento → Modelos**.
+Entrena y mide un modelo con validación cruzada por bloques: la zona se corta en cuadrados que se turnan como prueba, y en cada ronda se dejan fuera del entrenamiento los píxeles cercanos a los de prueba. `baseline` es la línea base, un árbol de dos preguntas sobre el NDVI de cada mes. `random_forest` usa todas las variables con una configuración fija (300 árboles) y además mide qué pesó: mezcla al azar, juntas, todas las variables de un mes o de un tipo entre los píxeles de prueba y mira cuánto baja el F1 promedio (tarda unos minutos). Escribe en `data/training/<dataset>/models/` el informe (`baseline.json`), la ronda de cada píxel (`folds.csv`) y lo que predijo para cada píxel cuando estaba en prueba (`baseline-predictions.csv`). Tamaño de los bloques, rondas, franja y meta de F1 en `config/training.json` (`evaluation`); los modelos, en `models`. El resultado se ve en **Reconocimiento → Modelos**.
 
 ### Prueba rápida del catálogo (B1)
 
@@ -153,7 +154,7 @@ src/cultivos/
 ├── modules/       # procesamiento por parcela: campañas, escenas, índices, clima, resultados
 ├── jobs/          # cola de tareas en Postgres y worker
 ├── training/      # datos de entrenamiento (D1): mapa de etiquetas, muestra, series mensuales, variables del modelo
-├── models/        # modelos (D2): bloques de la validación cruzada, línea base, medición
+├── models/        # modelos (D2): bloques de la validación cruzada, línea base, Random Forest, importancia de variables, medición
 ├── api/           # main.py (etiquetas, A), platform.py (B), parcels.py y jobs.py (C), osm_review.py y training.py (D)
 ├── zones.py       # zonas y recuadros
 └── ...            # scripts del subproyecto A (recorte, NDVI, etiquetas, series)

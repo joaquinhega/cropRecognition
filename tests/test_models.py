@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from cultivos.config import load_training_config
-from cultivos.models import baseline, blocks, evaluate
+from cultivos.models import baseline, blocks, evaluate, importance
 from cultivos.training import dataset, summary
 
 SETTINGS = {"block_size_m": 3000, "folds": 5, "buffer_m": 500, "seed": 42}
@@ -127,3 +127,35 @@ def test_models_missing_explain_the_command(tmp_path, monkeypatch):
         evaluate.run("baseline")
     with pytest.raises(evaluate.ModelError, match="desconocido"):
         evaluate.run("xyz")
+
+
+def test_importance_groups_by_month_and_kind():
+    columns = ["ndvi_m01", "ndvi_m02", "swir_m01", "ndvi_peak_month"]
+    grouping = importance.groups(columns, MONTHS[:2])
+    assert grouping["by_month"] == {"2024-07": [0, 2], "2024-08": [1]}
+    assert grouping["by_kind"] == {"ndvi": [0, 1], "swir": [2], "phenology": [3]}
+
+
+def test_shuffling_a_group_only_hurts_when_the_model_uses_it():
+    values = np.column_stack([np.tile([0.1, 0.9], 50), np.zeros(100)])
+    truth = np.tile(["a", "b"], 50)
+    model = baseline.make({"max_depth": 1}, seed=0).fit(values, truth)
+    grouping = {"by_kind": {"used": [0], "unused": [1], "empty": []}}
+    drops = importance.group_drops(model, values, truth, grouping, "accuracy", repeats=3, seed=0)["by_kind"]
+    assert drops["used"] > 0.3 and drops["unused"] == 0 and drops["empty"] == 0
+
+
+def test_random_forest_end_to_end_with_importance(tmp_path, monkeypatch):
+    config = {**load_training_config(), "output_dir": str(tmp_path)}
+    forest = {**config["models"]["random_forest"], "trees": 20, "importance": {"scoring": "f1_macro", "repeats": 1}}
+    config["models"] = {**config["models"], "random_forest": forest}
+    monkeypatch.setattr(evaluate, "load_training_config", lambda: config)
+    _write_features(dataset.folder(config))
+    report = evaluate.run("random_forest")
+    assert report["columns"] == 13 and report["rule"] is None
+    assert report["accuracy"] == 1.0
+    by_month = {item["month"]: item["value"] for item in report["importance"]["by_month"]}
+    assert len(by_month) == 12 and max(by_month, key=by_month.get) in ("2024-12", "2025-04")
+    assert by_month["2024-07"] <= 0.01
+    assert report["importance"]["by_kind"][0]["kind"] == "ndvi"
+    assert report["importance"]["kind_titles"]["ndvi"] == "Verdor (NDVI)"

@@ -1009,3 +1009,19 @@ code {
 .nowrap {
   white-space: nowrap;
 }
+
+/* D2-T2: variable importance bars */
+.model-bars td:first-child {
+  white-space: nowrap;
+}
+
+.model-bar-cell {
+  width: 40%;
+}
+
+.model-bar {
+  display: block;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}

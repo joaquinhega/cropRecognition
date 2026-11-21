@@ -40,14 +40,16 @@
       "swir": "swir",
       "max_swir_rise": 0.02
     },
-    "decimals": 4
+    "decimals": 4,
+    "band_titles": {"blue": "Azul", "red": "Rojo", "rededge": "Borde rojo", "nir": "Infrarrojo cercano", "swir": "Infrarrojo de onda corta"}
   },
   "evaluation": {
     "block_size_m": 3000,
     "folds": 5,
     "buffer_m": 500,
     "seed": 42,
-    "target_f1": 0.75
+    "target_f1": 0.75,
+    "baseline_model": "baseline"
   },
   "models": {
     "baseline": {
@@ -55,6 +57,14 @@
       "description": "Regla simple sobre el verdor de cada mes; el modelo que venga después tiene que superarla.",
       "index": "ndvi",
       "max_depth": 2
+    },
+    "random_forest": {
+      "title": "Random Forest",
+      "description": "Cientos de árboles que aprenden con partes distintas de los píxeles y de las variables y deciden por votación.",
+      "trees": 300,
+      "max_depth": null,
+      "min_samples_leaf": 5,
+      "importance": {"scoring": "f1_macro", "repeats": 3}
     }
   },
   "summary": {
