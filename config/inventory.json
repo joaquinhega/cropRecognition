@@ -20,7 +20,20 @@
     "reference_area_ha": 148996,
     "reference_note": "INV, vid en Mendoza al 31/12/2021",
     "review_sample_size": 30,
-    "review_seed": 42
+    "review_seed": 42,
+    "review": {
+      "sample_path": "data/inventory/osm-vineyard-muestra-revision.geojson",
+      "results_path": "data/inventory/osm-vineyard-revision.json",
+      "reference_start": "2025-12-15",
+      "reference_end": "2026-02-15",
+      "max_mismatch_share": 0.1,
+      "verdicts": {
+        "coincide": {"title": "Coincide", "help": "Casi todo el polígono es viñedo.", "mismatch": false, "uncertain": false},
+        "parcial": {"title": "Parcial", "help": "Es viñedo, pero el polígono incluye bastante de otra cosa (casa, monte, otro cultivo).", "mismatch": false, "uncertain": false},
+        "no_coincide": {"title": "No coincide", "help": "La mayor parte del polígono no es viñedo.", "mismatch": true, "uncertain": false},
+        "dudoso": {"title": "Dudoso", "help": "Con las imágenes no se puede decidir.", "mismatch": false, "uncertain": true}
+      }
+    }
   },
   "mnc": {
     "zenodo_api_url": "https://zenodo.org/api/records/",

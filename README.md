@@ -6,8 +6,9 @@ Plataforma intermediaria de datos satelitales para el agro: se conecta a fuentes
 
 - **A · Reconocedor de vid (Agrelo):** cerrado. Etiquetas, series de NDVI y tablas de entrenamiento.
 - **B · Datos y fuentes:** cerrado. Catálogo propio (eoAPI), adaptadores de Earth Search (Sentinel-2), NASA POWER (clima) y CONAE (SAOCOM, solo búsqueda), visor con modos Explorar y Etiquetar.
-- **C · Parcelas:** en curso. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela. Procesamiento en segundo plano: índices mensuales (NDVI, NDRE, NDMI, EVI) y clima por campaña. Ficha de parcela con curvas, clima y comparación entre campañas.
-- **D a F:** reconocimiento, API pública e interfaz final, fuentes pagas.
+- **C · Parcelas:** cerrado. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela. Procesamiento en segundo plano: índices mensuales (NDVI, NDRE, NDMI, EVI) y clima por campaña. Ficha de parcela con curvas, clima y comparación entre campañas.
+- **D · Reconocimiento de cultivos:** en curso. Revisión manual de la muestra de viñedos de OSM antes de entrenar.
+- **E y F:** API pública e interfaz final, fuentes pagas.
 
 ## Servicios
 
@@ -84,6 +85,10 @@ Las tareas viven en `platform.jobs`; si el worker se corta, la tarea vuelve a la
 
 Al elegir una parcela procesada en **Mi parcela** se abre su ficha a la derecha: un titular que compara el último mes con dato de la campaña en curso con el mismo mes de las anteriores, las curvas del índice elegido (una por campaña, de julio a junio), la lluvia y la temperatura por campaña, y la línea de tiempo por mes. Al elegir un mes, el mapa muestra la imagen usada (color real, infrarrojo, NDVI o nubes) sobre la parcela. La comparación sale de `GET /parcels/{id}/series` (campo `comparison`) y sus umbrales están en `config/processing.json` (`comparison`).
 
+### Revisión de OSM (D1-T0)
+
+En **Etiquetar → Revisar viñedos de OSM** se recorren los 30 polígonos de la muestra (`data/inventory/osm-vineyard-muestra-revision.geojson`) sobre la foto de Esri y la imagen de Sentinel-2 más limpia de pleno verano, y se marca cada uno como coincide, parcial, no coincide o dudoso. Las respuestas se guardan en `data/inventory/osm-vineyard-revision.json`; si no coinciden más del 10 %, OSM queda como fuente dudosa. Período, límite y respuestas en `config/inventory.json` (`osm.review`).
+
 ### Prueba rápida del catálogo (B1)
 
 ```powershell
@@ -129,7 +134,7 @@ src/cultivos/
 web/src/
 ├── explore/       # modo Explorar: capas, búsqueda, línea de tiempo, clima
 ├── parcels/       # modo Mi parcela: dibujar, subir, listar, renombrar, borrar, procesar; sheet/ es la ficha (C3)
-├── label/         # modo Etiquetar (herramienta de A)
+├── label/         # modo Etiquetar (herramienta de A) y revisión de OSM (D1-T0)
 └── map/           # mapas base y utilidades de Leaflet
 tests/             # pytest
 ```

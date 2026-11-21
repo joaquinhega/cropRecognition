@@ -38,10 +38,15 @@ def collection_layers(collection: str) -> list[dict]:
     ]
 
 
+def item_layers(collection: str, item_id: str) -> dict[str, str]:
+    """TiTiler URL of every layer defined for the item's collection."""
+    layers = load_layers_config().get(collection, {})
+    return {layer_id: layer_url(collection, item_id, layer["params"]) for layer_id, layer in layers.items()}
+
+
 def summarize(item: dict) -> dict:
     properties = item["properties"]
     moment = properties.get("datetime") or properties.get("start_datetime")
-    layers = load_layers_config().get(item["collection"], {})
     return {
         "id": item["id"],
         "collection": item["collection"],
@@ -52,7 +57,7 @@ def summarize(item: dict) -> dict:
         "tile": properties.get("grid:code"),
         "platform": properties.get("platform"),
         "bbox": item.get("bbox"),
-        "layers": {layer_id: layer_url(item["collection"], item["id"], layer["params"]) for layer_id, layer in layers.items()},
+        "layers": item_layers(item["collection"], item["id"]),
     }
 
 

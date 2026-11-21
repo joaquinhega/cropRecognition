@@ -898,3 +898,43 @@ code {
   font-size: 10px;
   white-space: nowrap;
 }
+
+/* D1-T0: OSM review */
+.review-summary p {
+  margin: 4px 0;
+}
+
+.review-note {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 6px;
+  resize: vertical;
+}
+
+.review-help {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.review-grid button {
+  padding: 4px 0;
+  border: 1px solid var(--border);
+  border-bottom-width: 4px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.review-grid button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}

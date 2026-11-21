@@ -21,6 +21,7 @@ import { fetchSeriesSummary } from "../seriesApi.js";
 import SplitBlocks from "../SplitBlocks.jsx";
 import SplitPanel from "../SplitPanel.jsx";
 import { createSplit, fetchSplit } from "../splitApi.js";
+import OsmReview from "./OsmReview.jsx";
 
 const BOUNDARY_STYLE = { color: "#ff8a65", weight: 2, fillOpacity: 0.05 };
 const BOUNDARY_ATTRIBUTION = "Límite: IGN vía datos.gob.ar (CC BY 4.0)";
@@ -46,6 +47,7 @@ export default function LabelingMode({ infoTarget, onLayerCount }) {
   const [showBlocks, setShowBlocks] = useState(true);
   const [series, setSeries] = useState(null);
   const [showSeries, setShowSeries] = useState(false);
+  const [reviewingOsm, setReviewingOsm] = useState(false);
 
   function goTo(id) {
     setSelectedId(id);
@@ -139,7 +141,11 @@ export default function LabelingMode({ infoTarget, onLayerCount }) {
       .catch(() => setLabelError("No se pudieron cargar las etiquetas guardadas."));
   }, []);
 
-  useEffect(() => onLayerCount(imagery?.dates.length ? 1 : 0), [imagery]);
+  useEffect(() => onLayerCount(imagery?.dates.length ? 1 : 0), [imagery, reviewingOsm]);
+
+  if (reviewingOsm) {
+    return <OsmReview infoTarget={infoTarget} onLayerCount={onLayerCount} onExit={() => setReviewingOsm(false)} />;
+  }
 
   if (error) return <p className="message">{error}</p>;
   if (!imagery) return <p className="message">Cargando imágenes...</p>;
@@ -209,6 +215,11 @@ export default function LabelingMode({ infoTarget, onLayerCount }) {
           <button className={showSeries ? "active" : ""} onClick={() => setShowSeries((current) => !current)}>
             {showSeries ? "Gráfico: visible" : "Gráfico: oculto"}
           </button>
+        </div>
+
+        <h3>Revisión de OSM</h3>
+        <div className="buttons">
+          <button onClick={() => setReviewingOsm(true)}>Revisar viñedos de OSM</button>
         </div>
 
         <h3>Etiquetas</h3>
