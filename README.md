@@ -7,7 +7,7 @@ Plataforma intermediaria de datos satelitales para el agro: se conecta a fuentes
 - **A · Reconocedor de vid (Agrelo):** cerrado. Etiquetas, series de NDVI y tablas de entrenamiento.
 - **B · Datos y fuentes:** cerrado. Catálogo propio (eoAPI), adaptadores de Earth Search (Sentinel-2), NASA POWER (clima) y CONAE (SAOCOM, solo búsqueda), visor con modos Explorar y Etiquetar.
 - **C · Parcelas:** cerrado. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela. Procesamiento en segundo plano: índices mensuales (NDVI, NDRE, NDMI, EVI) y clima por campaña. Ficha de parcela con curvas, clima y comparación entre campañas.
-- **D · Reconocimiento de cultivos:** en curso. La revisión manual de OSM dejó a Mendoza sin etiquetas confiables, así que el primer reconocimiento es en Pergamino (soja, maíz y otros) con el Mapa Nacional de Cultivos del INTA. Tabla de entrenamiento y modo Reconocimiento.
+- **D · Reconocimiento de cultivos:** en curso. La revisión manual de OSM dejó a Mendoza sin etiquetas confiables, así que el primer reconocimiento es en Pergamino (soja, maíz y otros) con el Mapa Nacional de Cultivos del INTA. Tabla de entrenamiento, variables, línea base medida por bloques y modo Reconocimiento.
 - **E y F:** API pública e interfaz final, fuentes pagas.
 
 ## Servicios
@@ -105,6 +105,14 @@ docker compose run --rm api python -m cultivos.training.features
 
 A partir de la tabla de D1-T1 arma `features.csv` con una fila por píxel: las bandas y los índices de cada mes (`ndvi_m01` es julio, el primer mes de la campaña) y la forma de la curva de NDVI (pico, mes del pico, mes en que arranca y en que se seca, meses verdes, verdor de invierno y de verano, entre otras). Antes descarta los meses con firma de bruma: el verdor cae, el azul se aclara y el infrarrojo de onda corta no sube (si sube, es vegetación que se seca de verdad y se conserva). Reglas en `config/training.json` (`features`); el resumen se ve en **Reconocimiento → Variables del modelo**.
 
+### Modelos y medición por bloques (D2)
+
+```powershell
+docker compose run --rm api python -m cultivos.models.evaluate baseline
+```
+
+Entrena y mide un modelo con validación cruzada por bloques: la zona se corta en cuadrados que se turnan como prueba, y en cada ronda se dejan fuera del entrenamiento los píxeles cercanos a los de prueba. `baseline` es la línea base, un árbol de dos preguntas sobre el NDVI de cada mes. Escribe en `data/training/<dataset>/models/` el informe (`baseline.json`), la ronda de cada píxel (`folds.csv`) y lo que predijo para cada píxel cuando estaba en prueba (`baseline-predictions.csv`). Tamaño de los bloques, rondas, franja y meta de F1 en `config/training.json` (`evaluation`); los modelos, en `models`. El resultado se ve en **Reconocimiento → Modelos**.
+
 ### Prueba rápida del catálogo (B1)
 
 ```powershell
@@ -145,6 +153,7 @@ src/cultivos/
 ├── modules/       # procesamiento por parcela: campañas, escenas, índices, clima, resultados
 ├── jobs/          # cola de tareas en Postgres y worker
 ├── training/      # datos de entrenamiento (D1): mapa de etiquetas, muestra, series mensuales, variables del modelo
+├── models/        # modelos (D2): bloques de la validación cruzada, línea base, medición
 ├── api/           # main.py (etiquetas, A), platform.py (B), parcels.py y jobs.py (C), osm_review.py y training.py (D)
 ├── zones.py       # zonas y recuadros
 └── ...            # scripts del subproyecto A (recorte, NDVI, etiquetas, series)
@@ -152,7 +161,7 @@ web/src/
 ├── explore/       # modo Explorar: capas, búsqueda, línea de tiempo, clima
 ├── parcels/       # modo Mi parcela: dibujar, subir, listar, renombrar, borrar, procesar; sheet/ es la ficha (C3)
 ├── label/         # modo Etiquetar (herramienta de A) y revisión de OSM (D1-T0)
-├── recognition/   # modo Reconocimiento: datos de entrenamiento (D1)
+├── recognition/   # modo Reconocimiento: datos de entrenamiento (D1) y modelos (D2)
 └── map/           # mapas base y utilidades de Leaflet
 tests/             # pytest
 ```

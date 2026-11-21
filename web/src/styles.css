@@ -972,3 +972,40 @@ code {
   cursor: pointer;
   color: var(--muted);
 }
+
+/* D2-T1: recognition, models */
+.model-result {
+  margin-top: 8px;
+}
+
+.model-result h4 {
+  margin: 8px 0 2px;
+  font-size: 13px;
+}
+
+.model-table td {
+  text-align: right;
+}
+
+.model-table td:first-child {
+  text-align: left;
+}
+
+.model-hit {
+  color: var(--accent);
+}
+
+.model-rule-root {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.model-rule {
+  margin: 2px 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

@@ -1,5 +1,7 @@
 """D1-T1: what the API shows of a training dataset: its summary, the curves per class and the sample pixels."""
 
+from pathlib import Path
+
 import numpy as np
 
 from cultivos.config import load_processing_config, load_training_config
@@ -7,6 +9,7 @@ from cultivos.training import dataset
 
 BUILD_COMMAND = "docker compose run --rm api python -m cultivos.training.build_table"
 FEATURES_COMMAND = "docker compose run --rm api python -m cultivos.training.features"
+MODELS_COMMAND = "docker compose run --rm api python -m cultivos.models.evaluate"
 
 
 class UnknownIndexName(ValueError):
@@ -74,6 +77,22 @@ def read_training(index: str | None = None) -> dict:
         "indices": indices,
         "curves": class_curves(summary, observations, pixels, index, config),
         "features": features,
+        "models": read_models(root, config),
+    }
+
+
+def read_models(root: Path, config: dict) -> dict:
+    """D2: results of each model already measured, in the order of config/training.json."""
+    folder = root / "models"
+    results = [
+        dataset.read_json(folder / f"{name}.json") for name in config["models"] if (folder / f"{name}.json").exists()
+    ]
+    targets = [name for name, info in config["labels"]["classes"].items() if not info.get("rest")]
+    return {
+        "available": bool(results),
+        "command": MODELS_COMMAND,
+        "evaluation": {**config["evaluation"], "targets": targets},
+        "results": results,
     }
 
 
@@ -86,13 +105,20 @@ def read_pixels_geojson() -> dict:
     path = dataset.folder(config) / "pixels.csv"
     if not path.exists():
         return {"type": "FeatureCollection", "features": [], **_not_ready()}
+    folds_path = path.parent / "models" / "folds.csv"
+    fold_of = {row["pixel_id"]: int(row["fold"]) for row in dataset.read_rows(folds_path)} if folds_path.exists() else {}
     return {
         "type": "FeatureCollection",
         "features": [
             {
                 "type": "Feature",
                 "geometry": {"type": "Point", "coordinates": [pixel["lon"], pixel["lat"]]},
-                "properties": {"pixel_id": pixel["pixel_id"], "class": pixel["class"], "map_value": pixel["map_value"]},
+                "properties": {
+                    "pixel_id": pixel["pixel_id"],
+                    "class": pixel["class"],
+                    "map_value": pixel["map_value"],
+                    "fold": fold_of.get(pixel["pixel_id"]),
+                },
             }
             for pixel in dataset.read_pixels(path)
         ],

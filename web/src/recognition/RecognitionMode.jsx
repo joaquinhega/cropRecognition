@@ -4,11 +4,14 @@ import { bboxToBounds, formatMonth, formatNumber } from "../format.js";
 import BaseLayers, { MAX_ZOOM } from "../map/BaseLayers.jsx";
 import { CursorPosition, FitBounds } from "../map/MapHelpers.jsx";
 import ClassCurves from "./ClassCurves.jsx";
+import ModelsCard from "./ModelsCard.jsx";
 import { fetchTraining, fetchTrainingPixels } from "./trainingApi.js";
 
 const ZONE_STYLE = { color: "#ffd54f", weight: 2, fill: false };
 const POINT_RADIUS = 3;
 const ESRI_NATIVE_ZOOM = { satellite: 17 };
+const ROUND_COLORS = ["#e15759", "#4e79a7", "#f28e2b", "#b07aa1", "#59a14f", "#edc948", "#76b7b2", "#ff9da7"];
+const NO_ROUND_COLOR = "#8b95a3";
 
 const percent = (share) => `${formatNumber(share * 100)} %`;
 const SHOWN_METRICS = ["peak_month", "peak_value", "rise_month", "green_months", "winter_mean", "summer_mean"];
@@ -87,6 +90,7 @@ export default function RecognitionMode({ infoTarget, onLayerCount }) {
   const [error, setError] = useState(null);
   const [showChart, setShowChart] = useState(true);
   const [showPixels, setShowPixels] = useState(true);
+  const [colorBy, setColorBy] = useState("class");
 
   useEffect(() => {
     fetchTraining(index)
@@ -144,6 +148,9 @@ export default function RecognitionMode({ infoTarget, onLayerCount }) {
         <h3>Variables del modelo</h3>
         <FeaturesCard features={training.features} classes={classes} />
 
+        <h3>Modelos</h3>
+        <ModelsCard models={training.models} classes={classes} />
+
         <h3>Qué mostrar</h3>
         <div className="buttons">
           {training.indices.map((name) => (
@@ -160,6 +167,28 @@ export default function RecognitionMode({ infoTarget, onLayerCount }) {
             {showPixels ? "Píxeles: visibles" : "Píxeles: ocultos"}
           </button>
         </div>
+        {training.models.available && (
+          <>
+            <div className="buttons">
+              <button className={colorBy === "class" ? "active" : ""} onClick={() => setColorBy("class")}>
+                Color por clase
+              </button>
+              <button className={colorBy === "round" ? "active" : ""} onClick={() => setColorBy("round")}>
+                Color por ronda de prueba
+              </button>
+            </div>
+            {colorBy === "round" && (
+              <p className="hint">
+                {Array.from({ length: training.models.evaluation.folds }, (_, number) => (
+                  <span key={number} className="nowrap">
+                    <span className="swatch" style={{ background: ROUND_COLORS[number % ROUND_COLORS.length] }} />
+                    Ronda {number + 1}{"  "}
+                  </span>
+                ))}
+              </p>
+            )}
+          </>
+        )}
 
         <h3>Meses (Sentinel-2)</h3>
         <MonthsTable months={training.months} />
@@ -213,15 +242,19 @@ export default function RecognitionMode({ infoTarget, onLayerCount }) {
           pixels?.features.map((feature) => {
             const [lon, lat] = feature.geometry.coordinates;
             const info = classes[feature.properties.class];
+            const { fold } = feature.properties;
+            const color =
+              colorBy === "round" ? (fold ? ROUND_COLORS[(fold - 1) % ROUND_COLORS.length] : NO_ROUND_COLOR) : info.color;
             return (
               <CircleMarker
                 key={feature.properties.pixel_id}
                 center={[lat, lon]}
                 radius={POINT_RADIUS}
-                pathOptions={{ color: info.color, fillColor: info.color, fillOpacity: 0.9, weight: 1 }}
+                pathOptions={{ color, fillColor: color, fillOpacity: 0.9, weight: 1 }}
               >
                 <Tooltip>
                   {feature.properties.pixel_id} · {info.title}
+                  {fold && ` · ronda ${fold}`}
                 </Tooltip>
               </CircleMarker>
             );

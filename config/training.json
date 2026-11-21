@@ -42,6 +42,21 @@
     },
     "decimals": 4
   },
+  "evaluation": {
+    "block_size_m": 3000,
+    "folds": 5,
+    "buffer_m": 500,
+    "seed": 42,
+    "target_f1": 0.75
+  },
+  "models": {
+    "baseline": {
+      "title": "Línea base: árbol de dos preguntas",
+      "description": "Regla simple sobre el verdor de cada mes; el modelo que venga después tiene que superarla.",
+      "index": "ndvi",
+      "max_depth": 2
+    }
+  },
   "summary": {
     "default_index": "NDVI",
     "percentiles": [25, 50, 75],
