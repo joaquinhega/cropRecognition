@@ -26,7 +26,7 @@ export const BASE_LAYERS = [
   },
 ];
 
-export default function BaseLayers({ defaultId = "dark", children }) {
+export default function BaseLayers({ defaultId = "dark", nativeZoom = {}, children }) {
   return (
     <LayersControl position="bottomright">
       {BASE_LAYERS.map((layer) => (
@@ -34,7 +34,7 @@ export default function BaseLayers({ defaultId = "dark", children }) {
           <TileLayer
             url={layer.url}
             attribution={layer.attribution}
-            maxNativeZoom={layer.maxNativeZoom}
+            maxNativeZoom={nativeZoom[layer.id] ?? layer.maxNativeZoom}
             maxZoom={MAX_ZOOM}
             subdomains={layer.subdomains ?? "abc"}
           />
