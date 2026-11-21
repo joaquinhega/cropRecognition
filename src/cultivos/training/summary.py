@@ -6,6 +6,7 @@ from cultivos.config import load_processing_config, load_training_config
 from cultivos.training import dataset
 
 BUILD_COMMAND = "docker compose run --rm api python -m cultivos.training.build_table"
+FEATURES_COMMAND = "docker compose run --rm api python -m cultivos.training.features"
 
 
 class UnknownIndexName(ValueError):
@@ -61,7 +62,19 @@ def read_training(index: str | None = None) -> dict:
     summary = dataset.read_json(summary_path)
     pixels = dataset.read_pixels(root / "pixels.csv")
     observations = dataset.read_rows(root / "observations.csv")
-    return {"available": True, **summary, "indices": indices, "curves": class_curves(summary, observations, pixels, index, config)}
+    features_path = root / "features.json"
+    features = (
+        {"available": True, **dataset.read_json(features_path)}
+        if features_path.exists()
+        else {"available": False, "command": FEATURES_COMMAND}
+    )
+    return {
+        "available": True,
+        **summary,
+        "indices": indices,
+        "curves": class_curves(summary, observations, pixels, index, config),
+        "features": features,
+    }
 
 
 def load_index_names() -> list[str]:

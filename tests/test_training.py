@@ -10,7 +10,7 @@ from rasterio.transform import from_origin
 
 from cultivos.api.main import app
 from cultivos.config import load_processing_config, load_training_config
-from cultivos.training import build_table, dataset, summary
+from cultivos.training import build_table, dataset, features, summary
 from cultivos.training.labels import homogeneous, map_legend, sample_pixels
 from cultivos.training.series import month_observations, read_points
 
@@ -173,3 +173,16 @@ def test_read_points_reads_values_and_marks_points_outside(tmp_path):
     outside_lon, outside_lat = to_lonlat.transform(299000, 6249975)
     result = read_points(str(path), np.array([inside_lon, outside_lon]), np.array([inside_lat, outside_lat]))
     assert result.tolist() == [values[2, 2], 0]
+
+
+def test_features_from_a_synthetic_build(built, monkeypatch):
+    monkeypatch.setattr(features, "load_training_config", summary.load_training_config)
+    assert client.get("/training").json()["features"] == {"available": False, "command": summary.FEATURES_COMMAND}
+    report = features.build()
+    assert report["pixels"] == 9
+    assert report["columns"] == {"monthly": 18, "phenology": 11, "total": 29}
+    assert report["haze"]["removed"] == 0
+    assert set(report["classes"]) == {"soja", "maiz", "otros"}
+    body = client.get("/training").json()
+    assert body["features"]["available"] is True
+    assert body["features"]["columns"]["total"] == 29

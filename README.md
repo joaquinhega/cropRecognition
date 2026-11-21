@@ -97,6 +97,14 @@ docker compose run --rm api python -m cultivos.training.build_table
 
 Recorta el Mapa Nacional de Cultivos 2024/25 (verano, INTA, CC BY 4.0) sobre la zona de entrenamiento, toma una muestra de píxeles por clase en manchas parejas y arma su serie mensual de Sentinel-2 de la campaña (julio a junio). Se puede cortar y volver a correr: reutiliza la muestra y los meses terminados. Deja todo en `data/training/<dataset>/` (`pixels.csv`, `observations.csv`, `summary.json`) y se ve en el modo **Reconocimiento**. Zona, campaña, clases y tamaño de la muestra en `config/training.json`.
 
+### Variables del modelo (D1-T2)
+
+```powershell
+docker compose run --rm api python -m cultivos.training.features
+```
+
+A partir de la tabla de D1-T1 arma `features.csv` con una fila por píxel: las bandas y los índices de cada mes (`ndvi_m01` es julio, el primer mes de la campaña) y la forma de la curva de NDVI (pico, mes del pico, mes en que arranca y en que se seca, meses verdes, verdor de invierno y de verano, entre otras). Antes descarta los meses con firma de bruma: el verdor cae, el azul se aclara y el infrarrojo de onda corta no sube (si sube, es vegetación que se seca de verdad y se conserva). Reglas en `config/training.json` (`features`); el resumen se ve en **Reconocimiento → Variables del modelo**.
+
 ### Prueba rápida del catálogo (B1)
 
 ```powershell
@@ -136,7 +144,7 @@ src/cultivos/
 ├── parcels/       # parcelas en PostGIS: validación, lectura de archivos, tabla
 ├── modules/       # procesamiento por parcela: campañas, escenas, índices, clima, resultados
 ├── jobs/          # cola de tareas en Postgres y worker
-├── training/      # datos de entrenamiento (D1): mapa de etiquetas, muestra, series mensuales
+├── training/      # datos de entrenamiento (D1): mapa de etiquetas, muestra, series mensuales, variables del modelo
 ├── api/           # main.py (etiquetas, A), platform.py (B), parcels.py y jobs.py (C), osm_review.py y training.py (D)
 ├── zones.py       # zonas y recuadros
 └── ...            # scripts del subproyecto A (recorte, NDVI, etiquetas, series)

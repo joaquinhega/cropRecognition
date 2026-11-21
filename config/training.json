@@ -27,6 +27,21 @@
     "seed": 42,
     "homogeneous_radius": 1
   },
+  "features": {
+    "phenology_index": "NDVI",
+    "half_amplitude_share": 0.5,
+    "winter_months": [7, 8, 9, 10],
+    "summer_months": [12, 1, 2, 3],
+    "haze": {
+      "index": "NDVI",
+      "min_index_drop": 0.15,
+      "blue": "blue",
+      "min_blue_rise": 0.02,
+      "swir": "swir",
+      "max_swir_rise": 0.02
+    },
+    "decimals": 4
+  },
   "summary": {
     "default_index": "NDVI",
     "percentiles": [25, 50, 75],

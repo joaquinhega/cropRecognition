@@ -11,6 +11,56 @@ const POINT_RADIUS = 3;
 const ESRI_NATIVE_ZOOM = { satellite: 17 };
 
 const percent = (share) => `${formatNumber(share * 100)} %`;
+const SHOWN_METRICS = ["peak_month", "peak_value", "rise_month", "green_months", "winter_mean", "summer_mean"];
+
+function metricText(features, name, value) {
+  if (value === null || value === undefined) return "—";
+  if (features.phenology[name].month_position) return formatMonth(features.month_keys[Math.round(value)]);
+  return Number.isInteger(value) ? formatNumber(value) : formatNumber(value, 2);
+}
+
+function FeaturesCard({ features, classes }) {
+  if (!features.available) {
+    return (
+      <p className="hint">
+        Todavía no están las variables. Ejecutá: <code>{features.command}</code>
+      </p>
+    );
+  }
+  const names = Object.keys(classes);
+  return (
+    <>
+      <p className="hint">
+        {formatNumber(features.columns.total)} por píxel: {formatNumber(features.columns.monthly)} mensuales y{" "}
+        {formatNumber(features.columns.phenology)} de la forma de la curva de {features.index}. Meses descartados por
+        bruma: {formatNumber(features.haze.removed)} de {formatNumber(features.haze.observations)}.
+      </p>
+      <table className="training-months">
+        <thead>
+          <tr>
+            <td className="muted">Valor típico</td>
+            {names.map((name) => (
+              <td key={name}>
+                <span className="swatch" style={{ background: classes[name].color }} />
+                {classes[name].title}
+              </td>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {SHOWN_METRICS.map((metric) => (
+            <tr key={metric}>
+              <td className="muted">{features.phenology[metric].title}</td>
+              {names.map((name) => (
+                <td key={name}>{metricText(features, metric, features.classes[name]?.[metric])}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+}
 
 function MonthsTable({ months }) {
   return (
@@ -90,6 +140,9 @@ export default function RecognitionMode({ infoTarget, onLayerCount }) {
             </li>
           ))}
         </ul>
+
+        <h3>Variables del modelo</h3>
+        <FeaturesCard features={training.features} classes={classes} />
 
         <h3>Qué mostrar</h3>
         <div className="buttons">
