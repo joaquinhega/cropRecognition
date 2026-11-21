@@ -1,0 +1,35 @@
+{
+  "dataset_id": "pergamino-2024-25-verano",
+  "zone": "pergamino",
+  "campaign_start": "2024-07-01",
+  "months": 12,
+  "output_dir": "data/training",
+  "labels": {
+    "source": "mnc",
+    "zenodo_api_url": "https://zenodo.org/api/records/",
+    "record_id": "17652712",
+    "map_file": "MNC_ver25.tif",
+    "legend_file": "MNC_ver25.qml",
+    "title": "Mapa Nacional de Cultivos 2024/25, cultivos de verano (INTA)",
+    "license": "CC BY 4.0",
+    "attribution": "INTA, Mapa Nacional de Cultivos campaña 2024/2025 (de Abelleyra et al.), Zenodo 17652712",
+    "limits": "Es el resultado de otro modelo, no una verdad de campo: sus errores pasan al entrenamiento y las métricas miden el acuerdo con este mapa.",
+    "classes": {
+      "soja": {"title": "Soja", "color": "#4cc38a", "label_keywords": ["soja"]},
+      "maiz": {"title": "Maíz", "color": "#f2b544", "label_keywords": ["maiz"]},
+      "otros": {"title": "Otros", "color": "#8b95a3", "rest": true}
+    },
+    "exclude_keywords": ["sin dato", "no clasificado", "nube", "nodata", "mascara"],
+    "exclude_values": [255]
+  },
+  "sample": {
+    "per_class": 2000,
+    "seed": 42,
+    "homogeneous_radius": 1
+  },
+  "summary": {
+    "default_index": "NDVI",
+    "percentiles": [25, 50, 75],
+    "decimals": 3
+  }
+}

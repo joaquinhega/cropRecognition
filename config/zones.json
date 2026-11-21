@@ -21,6 +21,11 @@
       "name": "Oasis Este, San Martín",
       "description": "Zona vitivinícola del oasis Este",
       "bbox": [-68.55, -33.15, -68.4, -33.0]
+    },
+    "pergamino": {
+      "name": "Pergamino (núcleo pampeano)",
+      "description": "Recuadro de unos 30 × 30 km con soja y maíz, para el primer reconocimiento (D-050)",
+      "bbox": [-60.73, -34.025, -60.405, -33.755]
     }
   }
 }

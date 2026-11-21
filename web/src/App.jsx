@@ -4,12 +4,14 @@ import { getJson } from "./api.js";
 import ExploreMode from "./explore/ExploreMode.jsx";
 import LabelingMode from "./label/LabelingMode.jsx";
 import ParcelsMode from "./parcels/ParcelsMode.jsx";
+import RecognitionMode from "./recognition/RecognitionMode.jsx";
 import SourcesDrawer from "./SourcesDrawer.jsx";
 
 const MODES = [
   { id: "explore", label: "Explorar" },
   { id: "parcels", label: "Mi parcela" },
   { id: "label", label: "Etiquetar" },
+  { id: "recognition", label: "Reconocimiento" },
 ];
 
 export default function App() {
@@ -85,6 +87,9 @@ export default function App() {
           <ParcelsMode zones={zones} infoTarget={infoTarget} onLayerCount={setLayerCount} />
         )}
         {ready && mode === "label" && <LabelingMode infoTarget={infoTarget} onLayerCount={setLayerCount} />}
+        {ready && mode === "recognition" && (
+          <RecognitionMode infoTarget={infoTarget} onLayerCount={setLayerCount} />
+        )}
       </main>
 
       {showSources && sources && <SourcesDrawer sources={sources} onClose={() => setShowSources(false)} />}

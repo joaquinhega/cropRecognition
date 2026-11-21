@@ -938,3 +938,37 @@ code {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+
+/* D1-T1: recognition, training data */
+.training-classes,
+.training-legend ul {
+  margin: 4px 0;
+  padding-left: 16px;
+  font-size: 13px;
+}
+
+.training-months {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.training-months td {
+  padding: 2px 4px 2px 0;
+}
+
+.training-months .muted,
+.training-classes .muted,
+.training-legend .muted {
+  color: var(--muted);
+}
+
+.training-legend {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.training-legend summary {
+  cursor: pointer;
+  color: var(--muted);
+}

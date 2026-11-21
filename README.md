@@ -7,7 +7,7 @@ Plataforma intermediaria de datos satelitales para el agro: se conecta a fuentes
 - **A · Reconocedor de vid (Agrelo):** cerrado. Etiquetas, series de NDVI y tablas de entrenamiento.
 - **B · Datos y fuentes:** cerrado. Catálogo propio (eoAPI), adaptadores de Earth Search (Sentinel-2), NASA POWER (clima) y CONAE (SAOCOM, solo búsqueda), visor con modos Explorar y Etiquetar.
 - **C · Parcelas:** cerrado. Parcelas en PostGIS, dibujadas o subidas (GeoJSON, KML, KMZ), en el modo Mi parcela. Procesamiento en segundo plano: índices mensuales (NDVI, NDRE, NDMI, EVI) y clima por campaña. Ficha de parcela con curvas, clima y comparación entre campañas.
-- **D · Reconocimiento de cultivos:** en curso. Revisión manual de la muestra de viñedos de OSM antes de entrenar.
+- **D · Reconocimiento de cultivos:** en curso. La revisión manual de OSM dejó a Mendoza sin etiquetas confiables, así que el primer reconocimiento es en Pergamino (soja, maíz y otros) con el Mapa Nacional de Cultivos del INTA. Tabla de entrenamiento y modo Reconocimiento.
 - **E y F:** API pública e interfaz final, fuentes pagas.
 
 ## Servicios
@@ -89,6 +89,14 @@ Al elegir una parcela procesada en **Mi parcela** se abre su ficha a la derecha:
 
 En **Etiquetar → Revisar viñedos de OSM** se recorren los 30 polígonos de la muestra (`data/inventory/osm-vineyard-muestra-revision.geojson`) sobre la foto de Esri y la imagen de Sentinel-2 más limpia de pleno verano, y se marca cada uno como coincide, parcial, no coincide o dudoso. Las respuestas se guardan en `data/inventory/osm-vineyard-revision.json`; si no coinciden más del 10 %, OSM queda como fuente dudosa. Período, límite y respuestas en `config/inventory.json` (`osm.review`).
 
+### Datos de entrenamiento (D1-T1)
+
+```powershell
+docker compose run --rm api python -m cultivos.training.build_table
+```
+
+Recorta el Mapa Nacional de Cultivos 2024/25 (verano, INTA, CC BY 4.0) sobre la zona de entrenamiento, toma una muestra de píxeles por clase en manchas parejas y arma su serie mensual de Sentinel-2 de la campaña (julio a junio). Se puede cortar y volver a correr: reutiliza la muestra y los meses terminados. Deja todo en `data/training/<dataset>/` (`pixels.csv`, `observations.csv`, `summary.json`) y se ve en el modo **Reconocimiento**. Zona, campaña, clases y tamaño de la muestra en `config/training.json`.
+
 ### Prueba rápida del catálogo (B1)
 
 ```powershell
@@ -128,13 +136,15 @@ src/cultivos/
 ├── parcels/       # parcelas en PostGIS: validación, lectura de archivos, tabla
 ├── modules/       # procesamiento por parcela: campañas, escenas, índices, clima, resultados
 ├── jobs/          # cola de tareas en Postgres y worker
-├── api/           # main.py (etiquetas, A), platform.py (B), parcels.py y jobs.py (C)
+├── training/      # datos de entrenamiento (D1): mapa de etiquetas, muestra, series mensuales
+├── api/           # main.py (etiquetas, A), platform.py (B), parcels.py y jobs.py (C), osm_review.py y training.py (D)
 ├── zones.py       # zonas y recuadros
 └── ...            # scripts del subproyecto A (recorte, NDVI, etiquetas, series)
 web/src/
 ├── explore/       # modo Explorar: capas, búsqueda, línea de tiempo, clima
 ├── parcels/       # modo Mi parcela: dibujar, subir, listar, renombrar, borrar, procesar; sheet/ es la ficha (C3)
 ├── label/         # modo Etiquetar (herramienta de A) y revisión de OSM (D1-T0)
+├── recognition/   # modo Reconocimiento: datos de entrenamiento (D1)
 └── map/           # mapas base y utilidades de Leaflet
 tests/             # pytest
 ```

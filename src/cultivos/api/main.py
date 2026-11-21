@@ -9,6 +9,7 @@ from cultivos.api.jobs import router as jobs_router
 from cultivos.api.osm_review import router as osm_review_router
 from cultivos.api.parcels import router as parcels_router
 from cultivos.api.platform import router as platform_router
+from cultivos.api.training import router as training_router
 from cultivos.catalog import items as catalog_items
 from cultivos.catalog.db import CatalogUnavailable
 from cultivos.clips import list_dates
@@ -31,6 +32,7 @@ app.include_router(platform_router)
 app.include_router(parcels_router)
 app.include_router(jobs_router)
 app.include_router(osm_review_router)
+app.include_router(training_router)
 
 
 class NewLabel(BaseModel):
